@@ -1,0 +1,233 @@
+<%- include('../partials/head', { heading: 'Booking ' + booking.code }) %>
+
+<div class="btn-row" style="margin-bottom:1rem">
+  <%
+    var cls = 'badge';
+    if (booking.status === 'checked_in') cls = 'badge badge--ok';
+    else if (booking.status === 'reserved') cls = 'badge badge--warn';
+    else if (booking.status === 'cancelled') cls = 'badge badge--bad';
+    else if (booking.status === 'checked_out') cls = 'badge badge--info';
+  %>
+  <span class="<%= cls %>" style="font-size:.85rem;padding:.3rem .7rem"><%= domain.BOOKING_STATUS_LABELS[booking.status] %></span>
+
+  <% if (booking.status === 'reserved' && can('bookings.checkin')) { %>
+    <form method="post" action="/bookings/<%= booking.id %>/check-in">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="btn btn--primary" type="submit">Check in</button>
+    </form>
+  <% } %>
+  <% if (booking.status === 'checked_in' && can('bookings.checkout')) { %>
+    <a class="btn btn--primary" href="/bookings/<%= booking.id %>/check-out">Check out &amp; bill</a>
+  <% } %>
+  <% if (booking.status === 'checked_in' && can('orders.create')) { %>
+    <a class="btn" href="/orders/new?order_type=room_service&booking_id=<%= booking.id %>&room_id=<%= current ? current.room_id : 0 %>">＋ Food order</a>
+  <% } %>
+  <% if (booking.status === 'reserved' && can('bookings.edit')) { %>
+    <a class="btn" href="/bookings/<%= booking.id %>/edit">Edit</a>
+  <% } %>
+  <% if (activeInvoice) { %>
+    <a class="btn" href="/invoices/<%= activeInvoice.id %>">Invoice <%= activeInvoice.number %></a>
+  <% } else if (booking.status === 'checked_out' && can('billing.create')) { %>
+    <form method="post" action="/bookings/<%= booking.id %>/re-invoice"
+          data-confirm="Create a fresh invoice for this stay?">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="btn" type="submit">Re-issue invoice</button>
+    </form>
+  <% } %>
+</div>
+
+<div class="grid grid--2">
+  <div class="card">
+    <div class="card__head"><h2>Stay</h2></div>
+    <div class="card__body">
+      <dl class="kv">
+        <dt>Guest</dt><dd><a href="/guests/<%= guest.id %>"><%= guest.full_name %></a></dd>
+        <dt>Phone</dt><dd><%= guest.phone || '—' %></dd>
+        <dt>CNIC / Passport</dt><dd><%= guest.id_number || '—' %></dd>
+        <dt>Arrival</dt><dd><%= fmtDate(booking.arrival_date) %><%= booking.checked_in_at ? ' (in at ' + fmtDateTime(booking.checked_in_at) + ')' : '' %></dd>
+        <dt>Departure</dt><dd><%= fmtDate(booking.departure_date) %><%= booking.checked_out_at ? ' (out at ' + fmtDateTime(booking.checked_out_at) + ')' : '' %></dd>
+        <dt>Nights</dt><dd><%= nights %></dd>
+        <dt>Guests</dt><dd><%= booking.adults %> adult(s)<%= booking.children ? ', ' + booking.children + ' child(ren)' : '' %></dd>
+        <dt>Booking type</dt><dd><%= domain.PACKAGE_LABELS[booking.package] %></dd>
+        <dt>Created</dt><dd><%= fmtDateTime(booking.created_at) %></dd>
+        <% if (booking.notes) { %><dt>Notes</dt><dd><%= booking.notes %></dd><% } %>
+        <% if (booking.status === 'cancelled') { %>
+          <dt>Cancelled</dt><dd><%= fmtDateTime(booking.cancelled_at) %><%= booking.cancel_reason ? ' — ' + booking.cancel_reason : '' %></dd>
+        <% } %>
+      </dl>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__head"><h2>Rooms</h2></div>
+    <div class="card__body card__body--flush table-wrap">
+      <table class="data">
+        <thead><tr><th>Room</th><th>From</th><th>To</th><th class="num">Rate</th></tr></thead>
+        <tbody>
+          <% segments.forEach(function (s) { %>
+            <tr>
+              <td><strong><%= s.room_number %></strong><br><small class="muted"><%= s.type_name %></small></td>
+              <td><%= fmtDate(s.from_date) %></td>
+              <td><%= fmtDate(s.to_date) %></td>
+              <td class="num"><%= hotel.currency_symbol %> <%= fmt(s.rate_minor) %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% if (booking.status === 'checked_in' && can('bookings.edit')) { %>
+      <div class="card__foot">
+        <div class="grid grid--2">
+          <form method="post" action="/bookings/<%= booking.id %>/extend">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="field">
+              <label for="extend-date">Extend stay to</label>
+              <input id="extend-date" name="departure_date" type="date" min="<%= booking.departure_date %>" required>
+            </div>
+            <button class="btn btn--block" type="submit">Extend stay</button>
+          </form>
+          <form method="post" action="/bookings/<%= booking.id %>/change-room">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="field">
+              <label for="move-room">Move to room</label>
+              <select id="move-room" name="room_id" required>
+                <option value="">— choose —</option>
+                <% freeRooms.forEach(function (r) { %>
+                  <option value="<%= r.id %>"><%= r.number %> · <%= r.type_name %> · <%= hotel.currency_symbol %> <%= fmt(r.base_rate) %></option>
+                <% }) %>
+              </select>
+            </div>
+            <input type="hidden" name="from_date" value="<%= today %>">
+            <button class="btn btn--block" type="submit">Change room from today</button>
+          </form>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<% if (draft) { %>
+  <div class="card">
+    <div class="card__head">
+      <h2>Bill so far</h2>
+      <div class="spacer"></div>
+      <span class="muted">Calculated to <%= fmtDate(previewDeparture) %></span>
+    </div>
+    <div class="card__body">
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead>
+          <tbody>
+            <% draft.room_lines.forEach(function (l) { %>
+              <tr>
+                <td>Room <%= l.room_number %> · <%= fmtDate(l.from_date) %> → <%= fmtDate(l.to_date) %></td>
+                <td class="num"><%= l.nights %></td>
+                <td class="num"><%= fmt(l.rate_minor) %></td>
+                <td class="num"><%= fmt(l.amount_minor) %></td>
+              </tr>
+            <% }) %>
+            <% draft.food_lines.forEach(function (l) { %>
+              <tr>
+                <td><small class="badge badge--brand"><%= domain.MEAL_LABELS[l.section] || l.section %></small> <%= l.description %></td>
+                <td class="num"><%= l.qty %></td>
+                <td class="num"><%= fmt(l.unit_minor) %></td>
+                <td class="num"><%= fmt(l.amount_minor) %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <div class="totals mt-1">
+        <div><span>Room charges</span><span><%= fmt(draft.room_charges_minor) %></span></div>
+        <div><span>Food charges</span><span><%= fmt(draft.food_charges_minor) %></span></div>
+        <% if (draft.discount_minor) { %><div><span>Discount</span><span>− <%= fmt(draft.discount_minor) %></span></div><% } %>
+        <% if (draft.tax_minor) { %><div><span><%= hotel.tax_label %> (<%= draft.tax_percent %>%)</span><span><%= fmt(draft.tax_minor) %></span></div><% } %>
+        <div class="grand"><span>Total</span><span><%= hotel.currency_symbol %> <%= fmt(draft.total_minor) %></span></div>
+        <% if (draft.complimentary_minor) { %>
+          <div class="muted"><span>Complimentary value</span><span><%= fmt(draft.complimentary_minor) %></span></div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+<% } %>
+
+<div class="card">
+  <div class="card__head">
+    <h2>Food orders</h2>
+    <div class="spacer"></div>
+    <% if (booking.status === 'checked_in' && can('orders.create')) { %>
+      <a class="btn btn--sm" href="/orders/new?order_type=room_service&booking_id=<%= booking.id %>&room_id=<%= current ? current.room_id : 0 %>">＋ New order</a>
+    <% } %>
+  </div>
+  <div class="card__body card__body--flush table-wrap">
+    <% if (!orders.length) { %>
+      <div class="table-empty">No food has been ordered on this booking.</div>
+    <% } else { %>
+      <table class="data">
+        <thead><tr><th>Order</th><th>When</th><th>Meal</th><th>Billing</th><th>Status</th><th class="num">Amount</th></tr></thead>
+        <tbody>
+          <% orders.forEach(function (o) { %>
+            <tr>
+              <td><a href="/orders/<%= o.id %>"><%= o.code %></a></td>
+              <td class="nowrap"><small><%= fmtDateTime(o.created_at) %></small></td>
+              <td><%= domain.MEAL_LABELS[o.meal_type] %></td>
+              <td><span class="badge badge--<%= o.billing_mode === 'add_to_room' ? 'info' : (o.billing_mode === 'complimentary' ? 'brand' : 'ok') %>"><%= domain.BILLING_MODE_LABELS[o.billing_mode] %></span></td>
+              <td><span class="badge"><%= domain.ORDER_STATUS_LABELS[o.status] %></span></td>
+              <td class="num"><%= fmt(o.total_minor) %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+</div>
+
+<div class="grid grid--2">
+  <% if (invoices.length) { %>
+    <div class="card">
+      <div class="card__head"><h2>Invoices</h2></div>
+      <div class="card__body card__body--flush table-wrap">
+        <table class="data">
+          <thead><tr><th>Number</th><th>Date</th><th>Status</th><th class="num">Total</th></tr></thead>
+          <tbody>
+            <% invoices.forEach(function (i) { %>
+              <tr>
+                <td><a href="/invoices/<%= i.id %>"><%= i.number %></a></td>
+                <td><small><%= fmtDateTime(i.created_at) %></small></td>
+                <td><span class="badge badge--<%= i.status === 'paid' ? 'ok' : (i.status === 'void' ? '' : 'warn') %>"><%= i.status %></span></td>
+                <td class="num"><%= fmt(i.total_minor) %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% } %>
+
+  <div class="card">
+    <div class="card__head"><h2>History</h2></div>
+    <div class="card__body">
+      <ul class="timeline">
+        <% history.forEach(function (h) { %>
+          <li>
+            <time><%= fmtDateTime(h.created_at) %> · <%= h.username %></time>
+            <%= h.action %><%= h.detail ? ' — ' + h.detail : '' %>
+          </li>
+        <% }) %>
+        <% if (!history.length) { %><li class="muted">Nothing recorded yet.</li><% } %>
+      </ul>
+    </div>
+    <% if (booking.status === 'reserved' && can('bookings.cancel')) { %>
+      <div class="card__foot">
+        <form method="post" action="/bookings/<%= booking.id %>/cancel"
+              data-confirm="Cancel booking <%= booking.code %>?">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="field"><label for="cancel-reason">Reason for cancelling</label><input id="cancel-reason" name="reason"></div>
+          <button class="btn btn--danger" type="submit">Cancel booking</button>
+        </form>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

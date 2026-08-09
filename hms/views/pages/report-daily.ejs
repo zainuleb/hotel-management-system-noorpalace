@@ -1,0 +1,188 @@
+<%- include('../partials/head', { heading: 'Daily Report' }) %>
+
+<div class="card no-print">
+  <div class="card__body">
+    <form class="filters" method="get" action="/reports/daily">
+      <a class="btn btn--sm" href="/reports/daily?date=<%= prevDate %>">‹ Prev</a>
+      <div class="field">
+        <label for="date">Report for</label>
+        <input id="date" name="date" type="date" value="<%= date %>" data-auto-submit>
+      </div>
+      <a class="btn btn--sm" href="/reports/daily?date=<%= nextDate %>">Next ›</a>
+      <a class="btn btn--sm" href="/reports/daily">Today</a>
+      <div style="flex:1"></div>
+      <button class="btn" type="button" onclick="window.print()">Print</button>
+      <% if (can('expenses.manage')) { %>
+        <a class="btn" href="/expenses?from=<%= date %>&to=<%= date %>">Add an expense</a>
+      <% } %>
+    </form>
+  </div>
+</div>
+
+<div class="print-head" style="display:none">
+  <h2><%= hotel.hotel_name %> — Daily Report</h2>
+  <p><%= fmtDate(date) %></p>
+</div>
+
+<div class="grid grid--4" style="margin-bottom:1.1rem">
+  <div class="stat stat--brand">
+    <div class="stat__label">Rooms occupied</div>
+    <div class="stat__value"><%= report.occupied_rooms.length %> <span style="font-size:1rem">/ <%= report.rooms_available %></span></div>
+    <div class="stat__meta"><%= report.occupancy_percent %>% occupancy</div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Room rent earned</div>
+    <div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(report.room_revenue_minor) %></div>
+    <div class="stat__meta">Average <%= fmt(report.average_rate_minor) %> per room</div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Restaurant sale</div>
+    <div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(report.food_revenue_minor) %></div>
+    <div class="stat__meta"><%= report.food.orders %> order(s)</div>
+  </div>
+  <% if (showMoney) { %>
+    <div class="stat" style="border-color:<%= report.profit_minor >= 0 ? 'var(--ok)' : 'var(--bad)' %>">
+      <div class="stat__label"><%= report.profit_minor >= 0 ? 'Profit' : 'Loss' %> for the day</div>
+      <div class="stat__value" style="color:<%= report.profit_minor >= 0 ? 'var(--ok)' : 'var(--bad)' %>">
+        <%= hotel.currency_symbol %> <%= fmt(Math.abs(report.profit_minor)) %>
+      </div>
+      <div class="stat__meta">Sale <%= fmt(report.total_sale_minor) %> − expenses <%= fmt(report.expense_total_minor) %></div>
+    </div>
+  <% } %>
+</div>
+
+<div class="card">
+  <div class="card__head">
+    <h2>Rooms occupied on <%= fmtDate(date) %></h2>
+    <div class="spacer"></div>
+    <span class="badge"><%= report.occupied_rooms.length %> room(s)</span>
+  </div>
+  <div class="card__body card__body--flush table-wrap">
+    <% if (!report.occupied_rooms.length) { %>
+      <div class="table-empty">No rooms were occupied on this date.</div>
+    <% } else { %>
+      <table class="data">
+        <thead><tr><th>Room</th><th>Floor</th><th>Guest</th><th>Booking</th><th>Stay</th><th class="num">Rent for the night</th></tr></thead>
+        <tbody>
+          <% report.occupied_rooms.forEach(function (r) { %>
+            <tr>
+              <td><strong><%= r.room_number %></strong></td>
+              <td><%= r.floor || '—' %></td>
+              <td><%= r.guest_name %></td>
+              <td><a href="/bookings/<%= r.booking_id %>"><%= r.code %></a></td>
+              <td class="nowrap"><small><%= fmtDate(r.arrival_date) %> → <%= fmtDate(r.departure_date) %></small></td>
+              <td class="num"><%= fmt(r.rate_minor) %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+        <tfoot>
+          <tr><td colspan="5">Total room rent</td><td class="num"><%= hotel.currency_symbol %> <%= fmt(report.room_revenue_minor) %></td></tr>
+        </tfoot>
+      </table>
+    <% } %>
+  </div>
+</div>
+
+<div class="grid grid--2">
+  <div class="card">
+    <div class="card__head"><h2>Restaurant</h2></div>
+    <div class="card__body card__body--flush table-wrap">
+      <table class="data">
+        <tbody>
+          <tr><td>Charged to rooms (billed at check-out)</td><td class="num"><%= fmt(report.food.add_to_room_minor) %></td></tr>
+          <tr><td>Cash now (should be in the drawer)</td><td class="num"><%= fmt(report.food.cash_now_minor) %></td></tr>
+          <% if (report.complimentary_minor) { %>
+            <tr><td class="muted">Complimentary (given away, not charged)</td><td class="num muted"><%= fmt(report.complimentary_minor) %></td></tr>
+          <% } %>
+        </tbody>
+        <tfoot>
+          <tr><td>Total restaurant sale</td><td class="num"><%= hotel.currency_symbol %> <%= fmt(report.food_revenue_minor) %></td></tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__head"><h2>Movements</h2></div>
+    <div class="card__body card__body--flush table-wrap">
+      <table class="data">
+        <tbody>
+          <tr><td>Arrivals</td><td class="num"><%= report.arrivals.length %></td></tr>
+          <tr><td>Departures</td><td class="num"><%= report.departures.length %></td></tr>
+          <tr><td>Rooms available</td><td class="num"><%= report.rooms_available %></td></tr>
+          <tr><td>Cash collected today</td><td class="num"><%= fmt(report.collected_minor) %></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card__foot">
+      <small class="muted">"Cash collected" is money actually received today against any invoice, old or new —
+        use it to check the drawer. The sale figures above are what the hotel <em>earned</em> today.</small>
+    </div>
+  </div>
+</div>
+
+<% if (showMoney) { %>
+  <div class="card">
+    <div class="card__head">
+      <h2>Expenses on <%= fmtDate(date) %></h2>
+      <div class="spacer"></div>
+      <% if (can('expenses.manage')) { %>
+        <a class="btn btn--sm no-print" href="/expenses?from=<%= date %>&to=<%= date %>">＋ Add</a>
+      <% } %>
+    </div>
+    <div class="card__body card__body--flush table-wrap">
+      <% if (!report.expenses.length) { %>
+        <div class="table-empty">Nothing recorded for this date.</div>
+      <% } else { %>
+        <table class="data">
+          <thead><tr><th>Category</th><th>Description</th><th>Paid to</th><th>Mode</th><th class="num">Amount</th></tr></thead>
+          <tbody>
+            <% report.expenses.forEach(function (e) { %>
+              <tr>
+                <td><%= e.category_name %></td>
+                <td><%= e.description %></td>
+                <td class="muted"><%= e.paid_to || '—' %></td>
+                <td><small><%= domain.PAYMENT_MODE_LABELS[e.payment_mode] %></small></td>
+                <td class="num"><%= e.kind === 'income' ? '+' : '−' %> <%= fmt(e.amount_minor) %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+          <tfoot>
+            <tr><td colspan="4">Total expenses</td><td class="num"><%= hotel.currency_symbol %> <%= fmt(report.expense_total_minor) %></td></tr>
+          </tfoot>
+        </table>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__head"><h2>Profit &amp; loss for <%= fmtDate(date) %></h2></div>
+    <div class="card__body">
+      <div class="totals" style="max-width:420px">
+        <div><span>Room rent</span><span><%= fmt(report.room_revenue_minor) %></span></div>
+        <div><span>Restaurant sale</span><span><%= fmt(report.food_revenue_minor) %></span></div>
+        <% if (report.other_income_minor) { %><div><span>Other income</span><span><%= fmt(report.other_income_minor) %></span></div><% } %>
+        <div style="border-top:1px solid var(--line);font-weight:650"><span>Total sale</span><span><%= fmt(report.total_sale_minor) %></span></div>
+        <div><span>Less expenses</span><span>− <%= fmt(report.expense_total_minor) %></span></div>
+        <div class="grand" style="color:<%= report.profit_minor >= 0 ? 'var(--ok)' : 'var(--bad)' %>">
+          <span><%= report.profit_minor >= 0 ? 'Profit' : 'Loss' %></span>
+          <span><%= hotel.currency_symbol %> <%= fmt(Math.abs(report.profit_minor)) %></span>
+        </div>
+      </div>
+      <p class="muted mt-1 mb-0"><small>
+        Figures exclude <%= hotel.tax_label %>. Tax collected on a guest's behalf is not the hotel's income.
+      </small></p>
+    </div>
+  </div>
+<% } %>
+
+<style>
+  @media print {
+    .print-head { display: block !important; text-align: center; margin-bottom: 8mm; }
+    .print-head h2 { margin: 0; }
+    .grid { display: block; }
+    .card { page-break-inside: avoid; margin-bottom: 6mm; }
+  }
+</style>
+
+<%- include('../partials/foot') %>

@@ -1,0 +1,50 @@
+<%- include('../partials/head', { heading: 'Outstanding Payments' }) %>
+
+<div class="grid grid--3" style="margin-bottom:1.1rem">
+  <div class="stat stat--brand">
+    <div class="stat__label">Total outstanding</div>
+    <div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(total) %></div>
+    <div class="stat__meta">as at <%= fmtDate(asOf) %></div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Bills waiting</div>
+    <div class="stat__value"><%= invoices.length %></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card__head">
+    <h2>Unpaid and part-paid bills</h2>
+    <div class="spacer"></div>
+    <a class="btn btn--sm" href="/reports/export.csv?report=outstanding">Export CSV</a>
+  </div>
+  <div class="card__body card__body--flush table-wrap">
+    <% if (!invoices.length) { %>
+      <div class="table-empty">Everything is settled. Nothing outstanding.</div>
+    <% } else { %>
+      <table class="data">
+        <thead>
+          <tr><th>Invoice</th><th>Guest</th><th>Booking</th><th>Raised</th><th class="num">Total</th><th class="num">Paid</th><th class="num">Balance</th></tr>
+        </thead>
+        <tbody>
+          <% invoices.forEach(function (i) { %>
+            <tr>
+              <td><a href="/invoices/<%= i.id %>"><strong><%= i.number %></strong></a></td>
+              <td><%= i.guest_name || '—' %></td>
+              <td><% if (i.booking_code) { %><%= i.booking_code %><% } else { %><small class="muted">Walk-in</small><% } %></td>
+              <td class="nowrap"><small><%= fmtDate(i.created_at) %></small></td>
+              <td class="num"><%= fmt(i.total_minor) %></td>
+              <td class="num"><%= fmt(i.paid_minor) %></td>
+              <td class="num"><strong><%= fmt(i.balance_minor) %></strong></td>
+            </tr>
+          <% }) %>
+        </tbody>
+        <tfoot>
+          <tr><td colspan="6">Total outstanding</td><td class="num"><%= hotel.currency_symbol %> <%= fmt(total) %></td></tr>
+        </tfoot>
+      </table>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

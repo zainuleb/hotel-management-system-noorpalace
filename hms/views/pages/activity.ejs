@@ -1,0 +1,37 @@
+<%- include('../partials/head', { heading: 'Activity Log' }) %>
+
+<p class="muted">
+  Every change to a booking, order, invoice or payment is recorded here with who did it and when.
+  <% if (entity) { %>Showing entries for <strong><%= entity %> #<%= entityId %></strong> — <a href="/admin/activity">show everything</a>.<% } %>
+</p>
+
+<div class="card">
+  <div class="card__head"><h2><%= entries.length %> entries</h2></div>
+  <div class="card__body card__body--flush table-wrap">
+    <% if (!entries.length) { %>
+      <div class="table-empty">Nothing recorded yet.</div>
+    <% } else { %>
+      <table class="data">
+        <thead><tr><th>When</th><th>Who</th><th>Action</th><th>Record</th><th>Detail</th></tr></thead>
+        <tbody>
+          <% entries.forEach(function (e) { %>
+            <tr>
+              <td class="nowrap"><small><%= fmtDateTime(e.created_at) %></small></td>
+              <td><%= e.username %></td>
+              <td><strong><%= e.action %></strong></td>
+              <td>
+                <% if (e.entity === 'booking') { %><a href="/bookings/<%= e.entity_id %>">booking #<%= e.entity_id %></a>
+                <% } else if (e.entity === 'order') { %><a href="/orders/<%= e.entity_id %>">order #<%= e.entity_id %></a>
+                <% } else if (e.entity === 'invoice') { %><a href="/invoices/<%= e.entity_id %>">invoice #<%= e.entity_id %></a>
+                <% } else { %><span class="muted"><%= e.entity %><%= e.entity_id !== '0' ? ' #' + e.entity_id : '' %></span><% } %>
+              </td>
+              <td class="muted"><%= e.detail %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

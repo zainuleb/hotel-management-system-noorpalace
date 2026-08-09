@@ -1,0 +1,309 @@
+<%- include('../partials/head', { heading: mode === 'edit' ? 'Edit ' + order.code : 'New Order' }) %>
+
+<form method="post" action="<%= mode === 'edit' ? '/orders/' + order.id + '/edit' : '/orders' %>" id="order-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="order-layout">
+    <div>
+      <div class="card">
+        <div class="card__head"><h2>Where is this order for?</h2></div>
+        <div class="card__body">
+          <% if (mode === 'create') { %>
+            <div class="radio-cards" style="margin-bottom:.9rem">
+              <label class="radio-card">
+                <input type="radio" name="order_type" value="room_service" data-order-type
+                       <%= defaults.order_type === 'room_service' ? 'checked' : '' %>>
+                <strong>Room service</strong>
+                <small>Delivered to a guest's room</small>
+              </label>
+              <label class="radio-card">
+                <input type="radio" name="order_type" value="dine_in" data-order-type
+                       <%= defaults.order_type === 'dine_in' ? 'checked' : '' %>>
+                <strong>Dine-in</strong>
+                <small>Restaurant table</small>
+              </label>
+            </div>
+          <% } else { %>
+            <p class="mb-0"><span class="badge badge--brand"><%= order.order_type === 'room_service' ? 'Room service' : 'Dine-in' %></span>
+              <span class="muted">Order type cannot be changed after the order is placed.</span></p>
+          <% } %>
+
+          <div class="form-grid form-grid--2 mt-1">
+            <div class="field" id="room-field">
+              <label for="room_choice">Room (checked-in guests only)</label>
+              <select id="room_choice" name="room_choice">
+                <option value="">— choose a room —</option>
+                <% occupied.forEach(function (r) { %>
+                  <option value="<%= r.booking_id %>:<%= r.id %>"
+                    <%= Number(defaults.booking_id) === r.booking_id ? 'selected' : '' %>>
+                    Room <%= r.number %> · <%= r.guest_name %> (<%= r.code %>)
+                  </option>
+                <% }) %>
+              </select>
+              <% if (!occupied.length) { %>
+                <small class="muted">Nobody is checked in right now, so nothing can be charged to a room.</small>
+              <% } %>
+            </div>
+
+            <div class="field" id="table-field">
+              <label for="table_no">Table number</label>
+              <input id="table_no" name="table_no" value="<%= defaults.table_no || '' %>" placeholder="e.g. 4">
+            </div>
+
+            <div class="field">
+              <label for="meal_type">Meal</label>
+              <select id="meal_type" name="meal_type">
+                <% Object.keys(domain.MEAL_LABELS).forEach(function (m) { %>
+                  <option value="<%= m %>" <%= defaults.meal_type === m ? 'selected' : '' %>><%= domain.MEAL_LABELS[m] %></option>
+                <% }) %>
+              </select>
+            </div>
+
+            <div class="field" id="guest-name-field">
+              <label for="guest_name">Customer name (optional)</label>
+              <input id="guest_name" name="guest_name" value="<%= order ? order.guest_name : '' %>">
+            </div>
+          </div>
+
+          <% if (mode === 'create') { %>
+            <div class="field-label">How is it paid?</div>
+            <div class="radio-cards">
+              <label class="radio-card">
+                <input type="radio" name="billing_mode" value="add_to_room" data-billing
+                       <%= defaults.billing_mode === 'add_to_room' ? 'checked' : '' %>>
+                <strong>Add to Room</strong>
+                <small>Goes on the guest's final bill at check-out</small>
+              </label>
+              <label class="radio-card">
+                <input type="radio" name="billing_mode" value="cash_now" data-billing
+                       <%= defaults.billing_mode === 'cash_now' ? 'checked' : '' %>>
+                <strong>Cash Now</strong>
+                <small>Paid immediately, closed as a walk-in sale</small>
+              </label>
+              <label class="radio-card">
+                <input type="radio" name="billing_mode" value="complimentary" data-billing
+                       <%= defaults.billing_mode === 'complimentary' ? 'checked' : '' %>>
+                <strong>Complimentary</strong>
+                <small>No charge — included in the package</small>
+              </label>
+            </div>
+            <small class="muted">You can switch between these later from the order screen if the wrong one was picked.</small>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__head"><h2>Menu</h2><div class="spacer"></div>
+          <input type="search" id="menu-search" placeholder="Search the menu" style="max-width:220px">
+        </div>
+        <div class="card__body">
+          <div class="menu-tabs" id="menu-tabs"></div>
+          <div class="menu-grid" id="menu-grid"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ticket">
+      <div class="card">
+        <div class="card__head"><h2>Order</h2><div class="spacer"></div><span class="badge" id="ticket-count">0 items</span></div>
+        <div class="card__body">
+          <div class="ticket__lines" id="ticket-lines">
+            <p class="muted mb-0" id="ticket-empty">Tap items on the menu to add them.</p>
+          </div>
+
+          <div class="field mt-1">
+            <label for="discount">Discount</label>
+            <input id="discount" name="discount" type="number" step="0.01" min="0"
+                   value="<%= order ? (order.discount_minor / 100).toFixed(2) : '0.00' %>">
+          </div>
+          <div class="field">
+            <label for="notes">Note for the kitchen</label>
+            <textarea id="notes" name="notes" rows="2"><%= order ? order.notes : '' %></textarea>
+          </div>
+
+          <div class="ticket__totals">
+            <div><span>Subtotal</span><span id="t-subtotal">0.00</span></div>
+            <div><span>Discount</span><span id="t-discount">0.00</span></div>
+            <div class="grand"><span>Total</span><span id="t-total">0.00</span></div>
+            <small class="muted" id="t-note"><%= hotel.tax_label %> is added on the receipt or the guest's final bill.</small>
+          </div>
+        </div>
+        <div class="card__foot btn-row">
+          <button class="btn btn--primary btn--lg btn--block" type="submit" id="save-btn">
+            <%= mode === 'edit' ? 'Save order' : 'Save order' %>
+          </button>
+          <a class="btn btn--block" href="<%= mode === 'edit' ? '/orders/' + order.id : '/orders' %>">Cancel</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="line-inputs"></div>
+</form>
+
+<script>
+  (function () {
+    var MENU = <%- JSON.stringify(menu) %>;
+    var LABELS = <%- JSON.stringify(domain.MENU_CATEGORY_LABELS) %>;
+    var SYMBOL = <%- JSON.stringify(hotel.currency_symbol) %>;
+    var MODE = <%- JSON.stringify(mode) %>;
+    var lines = <%- JSON.stringify((lines || []).map(function (l) {
+      return { id: l.menu_item_id, name: l.name_snapshot, price: l.unit_minor, qty: l.qty, note: l.note };
+    })) %>;
+
+    var categories = Object.keys(MENU);
+    var activeCategory = categories[0] || '';
+    var search = '';
+
+    var tabsEl = document.getElementById('menu-tabs');
+    var gridEl = document.getElementById('menu-grid');
+    var linesEl = document.getElementById('ticket-lines');
+    var inputsEl = document.getElementById('line-inputs');
+
+    function money(minor) { return (minor / 100).toFixed(2); }
+
+    function renderTabs() {
+      tabsEl.innerHTML = categories.map(function (c) {
+        return '<button type="button" class="menu-tab' + (c === activeCategory ? ' is-active' : '') +
+          '" data-cat="' + c + '">' + (LABELS[c] || c) + '</button>';
+      }).join('');
+    }
+
+    function visibleItems() {
+      if (search) {
+        var out = [];
+        categories.forEach(function (c) {
+          (MENU[c] || []).forEach(function (i) {
+            if (i.name.toLowerCase().indexOf(search) !== -1) out.push(i);
+          });
+        });
+        return out;
+      }
+      return MENU[activeCategory] || [];
+    }
+
+    function renderMenu() {
+      var items = visibleItems();
+      if (!items.length) {
+        gridEl.innerHTML = '<p class="muted">Nothing on the menu here.</p>';
+        return;
+      }
+      gridEl.innerHTML = items.map(function (i) {
+        return '<button type="button" class="menu-item" data-add="' + i.id + '">' +
+          '<strong>' + escapeHtml(i.name) + '</strong><span>' + SYMBOL + ' ' + money(i.price_minor) + '</span></button>';
+      }).join('');
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    function findItem(id) {
+      for (var c = 0; c < categories.length; c++) {
+        var found = (MENU[categories[c]] || []).filter(function (i) { return i.id === id; })[0];
+        if (found) return found;
+      }
+      return null;
+    }
+
+    function addItem(id) {
+      var existing = lines.filter(function (l) { return l.id === id; })[0];
+      if (existing) { existing.qty += 1; }
+      else {
+        var item = findItem(id);
+        if (!item) return;
+        lines.push({ id: item.id, name: item.name, price: item.price_minor, qty: 1, note: '' });
+      }
+      renderTicket();
+    }
+
+    function renderTicket() {
+      if (!lines.length) {
+        linesEl.innerHTML = '<p class="muted mb-0">Tap items on the menu to add them.</p>';
+      } else {
+        linesEl.innerHTML = lines.map(function (l, idx) {
+          return '<div class="ticket__line">' +
+            '<div class="name"><strong>' + escapeHtml(l.name) + '</strong><small>' + SYMBOL + ' ' + money(l.price) + ' each</small></div>' +
+            '<div class="qty">' +
+              '<button type="button" data-step="-1" data-idx="' + idx + '">−</button>' +
+              '<input type="number" min="1" value="' + l.qty + '" data-qty="' + idx + '">' +
+              '<button type="button" data-step="1" data-idx="' + idx + '">+</button>' +
+            '</div>' +
+            '<div class="ticket__amount">' + money(l.price * l.qty) + '</div>' +
+            '<button type="button" class="ticket__remove" data-remove="' + idx + '" aria-label="Remove">✕</button>' +
+          '</div>';
+        }).join('');
+      }
+
+      var subtotal = lines.reduce(function (s, l) { return s + l.price * l.qty; }, 0);
+      var discount = Math.round((parseFloat(document.getElementById('discount').value) || 0) * 100);
+      if (discount > subtotal) discount = subtotal;
+      var comp = document.querySelector('[data-billing]:checked');
+      var isComp = comp && comp.value === 'complimentary';
+
+      document.getElementById('t-subtotal').textContent = money(subtotal);
+      document.getElementById('t-discount').textContent = money(discount);
+      document.getElementById('t-total').textContent = isComp ? '0.00' : money(subtotal - discount);
+      document.getElementById('ticket-count').textContent =
+        lines.reduce(function (s, l) { return s + l.qty; }, 0) + ' items';
+      document.getElementById('save-btn').disabled = lines.length === 0;
+
+      inputsEl.innerHTML = lines.map(function (l, idx) {
+        return '<input type="hidden" name="lines[' + idx + '][menu_item_id]" value="' + l.id + '">' +
+               '<input type="hidden" name="lines[' + idx + '][qty]" value="' + l.qty + '">' +
+               '<input type="hidden" name="lines[' + idx + '][note]" value="' + escapeHtml(l.note || '') + '">';
+      }).join('');
+    }
+
+    /* Show the right "where" field for the chosen order type. */
+    function syncOrderType() {
+      var checked = document.querySelector('[data-order-type]:checked');
+      var type = checked ? checked.value : <%- JSON.stringify(defaults.order_type) %>;
+      var billing = document.querySelector('[data-billing]:checked');
+      var roomNeeded = type === 'room_service' || (billing && billing.value === 'add_to_room');
+      document.getElementById('room-field').classList.toggle('hidden', !roomNeeded);
+      document.getElementById('table-field').classList.toggle('hidden', type !== 'dine_in');
+      document.getElementById('guest-name-field').classList.toggle('hidden', type !== 'dine_in');
+      document.getElementById('room_choice').required = !!roomNeeded && MODE === 'create';
+    }
+
+    document.addEventListener('click', function (e) {
+      var tab = e.target.closest('[data-cat]');
+      if (tab) { activeCategory = tab.dataset.cat; search = ''; document.getElementById('menu-search').value = ''; renderTabs(); renderMenu(); return; }
+      var add = e.target.closest('[data-add]');
+      if (add) { addItem(Number(add.dataset.add)); return; }
+      var step = e.target.closest('[data-step]');
+      if (step) {
+        var i = Number(step.dataset.idx);
+        lines[i].qty = Math.max(1, lines[i].qty + Number(step.dataset.step));
+        renderTicket();
+        return;
+      }
+      var rm = e.target.closest('[data-remove]');
+      if (rm) { lines.splice(Number(rm.dataset.remove), 1); renderTicket(); }
+    });
+
+    document.addEventListener('input', function (e) {
+      if (e.target.matches('[data-qty]')) {
+        var i = Number(e.target.dataset.qty);
+        lines[i].qty = Math.max(1, parseInt(e.target.value, 10) || 1);
+        renderTicket();
+      }
+      if (e.target.id === 'discount') renderTicket();
+      if (e.target.id === 'menu-search') { search = e.target.value.trim().toLowerCase(); renderMenu(); }
+    });
+
+    document.addEventListener('change', function (e) {
+      if (e.target.matches('[data-order-type], [data-billing]')) { syncOrderType(); renderTicket(); }
+    });
+
+    renderTabs();
+    renderMenu();
+    renderTicket();
+    syncOrderType();
+  })();
+</script>
+
+<%- include('../partials/foot') %>

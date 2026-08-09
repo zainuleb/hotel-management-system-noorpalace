@@ -1,0 +1,78 @@
+<%- include('../partials/head', { heading: 'Room-wise Performance' }) %>
+<%- include('../partials/range-filter', { action: '/reports/rooms', from: from, to: to, preset: preset, csv: 'rooms' }) %>
+
+<div class="grid grid--4" style="margin-bottom:1.1rem">
+  <div class="stat stat--brand">
+    <div class="stat__label">Total room revenue</div>
+    <div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(totals.room) %></div>
+    <div class="stat__meta"><%= totals.nights %> room-nights sold</div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Food on rooms</div>
+    <div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(totals.food) %></div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Combined</div>
+    <div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(totals.total) %></div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Rooms that earned nothing</div>
+    <div class="stat__value"><%= rows.filter(function (r) { return !r.nights_sold; }).length %></div>
+    <div class="stat__meta">of <%= rows.length %> rooms</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card__head">
+    <h2>Every room, <%= fmtDate(from) %> → <%= fmtDate(to) %></h2>
+    <div class="spacer"></div>
+    <span class="muted">Sorted by what they earned</span>
+  </div>
+  <div class="card__body card__body--flush table-wrap">
+    <% if (!rows.length) { %>
+      <div class="table-empty">No rooms set up yet.</div>
+    <% } else { %>
+      <% var peak = Math.max.apply(null, rows.map(function (r) { return r.total_revenue_minor; }).concat([1])); %>
+      <table class="data">
+        <thead>
+          <tr><th>Room</th><th>Floor</th><th>Type</th><th class="num">Nights</th><th class="num">Occupancy</th>
+              <th class="num">Avg rate</th><th class="num">Room</th><th class="num">Food</th><th class="num">Total</th><th style="width:16%"></th></tr>
+        </thead>
+        <tbody>
+          <% rows.forEach(function (r) { %>
+            <tr>
+              <td><strong><%= r.room_number %></strong></td>
+              <td><%= r.floor || '—' %></td>
+              <td><%= r.type_name %></td>
+              <td class="num"><%= r.nights_sold %></td>
+              <td class="num"><%= r.occupancy_percent %>%</td>
+              <td class="num"><%= r.nights_sold ? fmt(r.average_rate_minor) : '—' %></td>
+              <td class="num"><%= fmt(r.room_revenue_minor) %></td>
+              <td class="num"><%= fmt(r.food_revenue_minor) %></td>
+              <td class="num"><strong><%= fmt(r.total_revenue_minor) %></strong></td>
+              <td><div class="bar"><span style="width:<%= Math.round((r.total_revenue_minor / peak) * 100) %>%"></span></div></td>
+            </tr>
+          <% }) %>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3">Total</td>
+            <td class="num"><%= totals.nights %></td>
+            <td colspan="2"></td>
+            <td class="num"><%= fmt(totals.room) %></td>
+            <td class="num"><%= fmt(totals.food) %></td>
+            <td class="num"><%= fmt(totals.total) %></td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    <% } %>
+  </div>
+  <div class="card__foot">
+    <small class="muted">Food is credited to the room it was delivered to, so a room that sells a lot of
+      room service shows its full contribution. Dine-in orders at a table are not counted here.</small>
+  </div>
+</div>
+
+<style>@media print { .card { page-break-inside: avoid; } }</style>
+<%- include('../partials/foot') %>

@@ -1,0 +1,67 @@
+<%- include('../partials/head', { heading: 'Reports' }) %>
+
+<p class="muted">Every report can be printed, and most export to Excel.</p>
+
+<%
+  var reports = [
+    { href: '/reports/daily',    title: 'Daily Report',        icon: '🗓',
+      need: 'reports.view',
+      blurb: 'The evening sheet — rooms occupied with their rent, restaurant sale, the day\'s expenses, and profit or loss.' },
+    { href: '/reports/monthly',  title: 'Monthly Report',      icon: '📊',
+      need: 'reports.pnl',
+      blurb: 'Total sale, expenses by category, net profit, occupancy and average rate, plus a day-by-day table.' },
+    { href: '/reports/yearly',   title: 'Year Summary',        icon: '📅',
+      need: 'reports.pnl',
+      blurb: 'Twelve months of profit and loss side by side. The report for the year-end conversation.' },
+    { href: '/reports/sales',    title: 'Sales & Occupancy',   icon: '📈',
+      need: 'reports.view',
+      blurb: 'Revenue by day room-vs-food, meal-wise sales, Add-to-Room vs Cash-Now split, best sellers, occupancy.' },
+    { href: '/reports/rooms',    title: 'Room-wise Performance', icon: '🚪',
+      need: 'reports.view',
+      blurb: 'Which rooms earn and which sit empty — nights sold, occupancy, room and food revenue per room.' },
+    { href: '/reports/cashbook', title: 'Cash Book',           icon: '📒',
+      need: 'reports.pnl',
+      blurb: 'Every movement of money in one list with a running balance. What you reconcile the cash box against.' },
+    { href: '/reports/tax',      title: 'Tax Collected',       icon: '🧾',
+      need: 'reports.pnl',
+      blurb: 'Tax charged on invoices, month by month, with the taxable amount behind it. For filing returns.' },
+    { href: '/billing/outstanding', title: 'Outstanding Payments', icon: '⚠',
+      need: 'billing.view',
+      blurb: 'Every unpaid or partly paid bill with its balance. The chase list.' },
+  ];
+%>
+
+<div class="grid grid--3">
+  <% reports.filter(function (r) { return can(r.need); }).forEach(function (r) { %>
+    <a class="card" href="<%= r.href %>" style="display:block;color:inherit;text-decoration:none">
+      <div class="card__body">
+        <div style="font-size:1.6rem;line-height:1"><%= r.icon %></div>
+        <h3 style="margin:.5rem 0 .25rem"><%= r.title %></h3>
+        <p class="muted mb-0"><small><%= r.blurb %></small></p>
+      </div>
+    </a>
+  <% }) %>
+</div>
+
+<% if (can('reports.pnl')) { %>
+  <div class="card">
+    <div class="card__head"><h2>How the numbers are counted</h2></div>
+    <div class="card__body">
+      <dl class="kv">
+        <dt>Earned vs received</dt>
+        <dd>Room rent counts on the night the guest sleeps, not the day they pay. That is the only way a
+          period's income can be set against that period's costs. The <a href="/reports/cashbook">cash book</a>
+          is the other view: money that actually moved.</dd>
+        <dt>Tax</dt>
+        <dd>Profit figures exclude <%= hotel.tax_label %>. Tax collected for the government was never the
+          hotel's income. The <a href="/reports/tax">tax report</a> shows it separately.</dd>
+        <dt>Complimentary meals</dt>
+        <dd>Shown at menu value so you can see what is being given away, but never counted as income.</dd>
+        <dt>Voided invoices</dt>
+        <dd>Excluded everywhere. They stay in the system for the audit trail only.</dd>
+      </dl>
+    </div>
+  </div>
+<% } %>
+
+<%- include('../partials/foot') %>

@@ -1,0 +1,105 @@
+<%- include('../partials/head', { heading: 'Cash Book' }) %>
+<%- include('../partials/range-filter', {
+      action: '/reports/cashbook', from: from, to: to, preset: preset, csv: 'cashbook',
+      extraFields: '<div class="field"><label for="mode">Payment mode</label>' +
+        '<select id="mode" name="mode">' +
+        ['all','cash','card','bank_transfer','online'].map(function (m) {
+          var label = m === 'all' ? 'All modes' : domain.PAYMENT_MODE_LABELS[m];
+          return '<option value="' + m + '"' + (mode === m ? ' selected' : '') + '>' + label + '</option>';
+        }).join('') + '</select></div>'
+    }) %>
+
+<div class="grid grid--3" style="margin-bottom:1.1rem">
+  <div class="stat">
+    <div class="stat__label">Money in</div>
+    <div class="stat__value" style="color:var(--ok)"><%= hotel.currency_symbol %> <%= fmt(summary.in_minor) %></div>
+    <div class="stat__meta">Guest payments and other income</div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Money out</div>
+    <div class="stat__value" style="color:var(--bad)"><%= hotel.currency_symbol %> <%= fmt(summary.out_minor) %></div>
+    <div class="stat__meta">Expenses paid</div>
+  </div>
+  <div class="stat" style="border-color:<%= summary.net_minor >= 0 ? 'var(--ok)' : 'var(--bad)' %>">
+    <div class="stat__label">Net movement</div>
+    <div class="stat__value" style="color:<%= summary.net_minor >= 0 ? 'var(--ok)' : 'var(--bad)' %>">
+      <%= hotel.currency_symbol %> <%= fmt(summary.net_minor) %></div>
+    <div class="stat__meta"><%= fmtDate(from) %> → <%= fmtDate(to) %></div>
+  </div>
+</div>
+
+<% if (summary.by_mode.length) { %>
+  <div class="card">
+    <div class="card__head"><h2>By payment mode</h2></div>
+    <div class="card__body card__body--flush table-wrap">
+      <table class="data">
+        <thead><tr><th>Mode</th><th class="num">In</th><th class="num">Out</th><th class="num">Net</th></tr></thead>
+        <tbody>
+          <% summary.by_mode.forEach(function (m) { %>
+            <tr>
+              <td><%= domain.PAYMENT_MODE_LABELS[m.mode] || m.mode %></td>
+              <td class="num"><%= fmt(m.in_minor) %></td>
+              <td class="num"><%= fmt(m.out_minor) %></td>
+              <td class="num"><strong><%= fmt(m.in_minor - m.out_minor) %></strong></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div class="card__foot">
+      <small class="muted">The <strong>Cash</strong> row is what should physically be in the box —
+        cash taken from guests, less cash paid out for expenses.</small>
+    </div>
+  </div>
+<% } %>
+
+<div class="card">
+  <div class="card__head">
+    <h2>Every movement</h2>
+    <div class="spacer"></div>
+    <span class="badge"><%= rows.length %> entries</span>
+  </div>
+  <div class="card__body card__body--flush table-wrap">
+    <% if (!rows.length) { %>
+      <div class="table-empty">No money moved in this period.</div>
+    <% } else { %>
+      <table class="data">
+        <thead>
+          <tr><th>Date</th><th>Reference</th><th>Description</th><th>Mode</th>
+              <th class="num">In</th><th class="num">Out</th><th class="num">Balance</th></tr>
+        </thead>
+        <tbody>
+          <% rows.forEach(function (r) { %>
+            <tr>
+              <td class="nowrap"><small><%= fmtDate(r.entry_date) %></small></td>
+              <td>
+                <% if (r.link) { %><a href="<%= r.link %>"><%= r.reference %></a><% } else { %><%= r.reference %><% } %>
+              </td>
+              <td><%= r.description %></td>
+              <td><small><%= domain.PAYMENT_MODE_LABELS[r.mode] || r.mode %></small></td>
+              <td class="num" style="color:var(--ok)"><%= r.direction === 'in' ? fmt(r.amount_minor) : '' %></td>
+              <td class="num" style="color:var(--bad)"><%= r.direction === 'out' ? fmt(r.amount_minor) : '' %></td>
+              <td class="num"><strong><%= fmt(r.running_minor) %></strong></td>
+            </tr>
+          <% }) %>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4">Totals</td>
+            <td class="num"><%= fmt(summary.in_minor) %></td>
+            <td class="num"><%= fmt(summary.out_minor) %></td>
+            <td class="num"><%= fmt(summary.net_minor) %></td>
+          </tr>
+        </tfoot>
+      </table>
+    <% } %>
+  </div>
+  <div class="card__foot">
+    <small class="muted">The running balance starts at zero on <%= fmtDate(from) %> — it is the movement
+      across this period, not the bank balance. Expenses carry a date but no time, so they are listed
+      after the day's guest payments.</small>
+  </div>
+</div>
+
+<style>@media print { .card { page-break-inside: avoid; } }</style>
+<%- include('../partials/foot') %>

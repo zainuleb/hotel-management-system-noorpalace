@@ -1,0 +1,87 @@
+<%- include('../partials/head', { heading: 'Food Orders' }) %>
+
+<div class="card">
+  <div class="card__body">
+    <form class="filters" method="get" action="/orders">
+      <div class="field field--grow">
+        <label for="q">Search</label>
+        <input id="q" name="q" type="search" value="<%= filters.q %>" placeholder="Order code, room, table or guest">
+      </div>
+      <div class="field">
+        <label for="status">Status</label>
+        <select id="status" name="status" data-auto-submit>
+          <% [['active','Open + served'],['open','Open'],['served','Served'],['settled','Settled'],['cancelled','Cancelled'],['all','All']].forEach(function (o) { %>
+            <option value="<%= o[0] %>" <%= filters.status === o[0] ? 'selected' : '' %>><%= o[1] %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="field">
+        <label for="billing_mode">Billing</label>
+        <select id="billing_mode" name="billing_mode" data-auto-submit>
+          <option value="all" <%= filters.billing_mode === 'all' ? 'selected' : '' %>>All</option>
+          <% Object.keys(domain.BILLING_MODE_LABELS).forEach(function (m) { %>
+            <option value="<%= m %>" <%= filters.billing_mode === m ? 'selected' : '' %>><%= domain.BILLING_MODE_LABELS[m] %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="field">
+        <label for="meal_type">Meal</label>
+        <select id="meal_type" name="meal_type" data-auto-submit>
+          <option value="all" <%= filters.meal_type === 'all' ? 'selected' : '' %>>All</option>
+          <% Object.keys(domain.MEAL_LABELS).forEach(function (m) { %>
+            <option value="<%= m %>" <%= filters.meal_type === m ? 'selected' : '' %>><%= domain.MEAL_LABELS[m] %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="field">
+        <label for="date">Day</label>
+        <input id="date" name="date" type="date" value="<%= filters.date %>" data-auto-submit>
+      </div>
+      <button class="btn btn--primary" type="submit">Filter</button>
+      <% if (can('orders.create')) { %>
+        <a class="btn" href="/orders/new?order_type=room_service">＋ Room service</a>
+        <a class="btn" href="/orders/new?order_type=dine_in">＋ Dine-in</a>
+      <% } %>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card__head"><h2><%= orders.length %> order(s)</h2></div>
+  <div class="card__body card__body--flush table-wrap">
+    <% if (!orders.length) { %>
+      <div class="table-empty">No orders match those filters.</div>
+    <% } else { %>
+      <table class="data">
+        <thead>
+          <tr><th>Order</th><th>Time</th><th>Where</th><th>Meal</th><th>Billing</th><th>Status</th><th class="num">Items</th><th class="num">Amount</th></tr>
+        </thead>
+        <tbody>
+          <% orders.forEach(function (o) { %>
+            <tr>
+              <td><a href="/orders/<%= o.id %>"><strong><%= o.code %></strong></a></td>
+              <td class="nowrap"><small><%= fmtDateTime(o.created_at) %></small></td>
+              <td>
+                <% if (o.order_type === 'room_service') { %>
+                  Room <%= o.room_number || '—' %><% if (o.guest_full_name) { %><br><small class="muted"><%= o.guest_full_name %></small><% } %>
+                <% } else { %>
+                  Table <%= o.table_no || '—' %><% if (o.guest_name) { %><br><small class="muted"><%= o.guest_name %></small><% } %>
+                <% } %>
+              </td>
+              <td><%= domain.MEAL_LABELS[o.meal_type] %></td>
+              <td><span class="badge badge--<%= o.billing_mode === 'add_to_room' ? 'info' : (o.billing_mode === 'complimentary' ? 'brand' : 'ok') %>"><%= domain.BILLING_MODE_LABELS[o.billing_mode] %></span></td>
+              <td>
+                <% var sc = o.status === 'open' ? 'warn' : (o.status === 'cancelled' ? 'bad' : (o.status === 'settled' ? 'ok' : 'info')); %>
+                <span class="badge badge--<%= sc %>"><%= domain.ORDER_STATUS_LABELS[o.status] %></span>
+              </td>
+              <td class="num"><%= o.item_count %></td>
+              <td class="num"><%= fmt(o.total_minor) %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

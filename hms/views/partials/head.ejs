@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= title %> · <%= hotel.hotel_name %></title>
+<link rel="stylesheet" href="/assets/css/app.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🏨</text></svg>">
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar is-collapsed" id="sidebar">
+    <div class="sidebar__brand">
+      <strong><%= hotel.hotel_name %></strong>
+      <span>Hotel Management</span>
+    </div>
+    <nav class="nav">
+      <%
+        // `exact` stops a parent like /reports lighting up for /reports/daily.
+        function isActive(href, exact) {
+          if (currentPath === href) return true;
+          if (exact || href === '/') return false;
+          return currentPath.startsWith(href + '/') || currentPath.startsWith(href + '?');
+        }
+      %>
+      <% function link(href, label, icon, permission, exact) { %>
+        <% if (!permission || can(permission)) { %>
+          <a href="<%= href %>" class="<%= isActive(href, exact) ? 'is-active' : '' %>">
+            <span class="nav__icon"><%= icon %></span><span><%= label %></span>
+          </a>
+        <% } %>
+      <% } %>
+
+      <% link('/', 'Dashboard', '▦', 'dashboard.view', true) %>
+      <% link('/admin', 'Admin Dashboard', '📈', 'reports.pnl', true) %>
+
+      <div class="nav__group">Front Desk</div>
+      <% link('/rooms', 'Room Status', '▤', 'rooms.view') %>
+      <% link('/rooms/availability', 'Availability', '🔍', 'rooms.view') %>
+      <% link('/bookings', 'Bookings', '📅', 'bookings.view') %>
+      <% link('/guests', 'Guests', '👤', 'guests.view') %>
+
+      <div class="nav__group">Restaurant</div>
+      <% link('/orders', 'Orders', '🍽', 'orders.view') %>
+      <% link('/orders/kitchen', 'Kitchen Queue', '👨‍🍳', 'orders.view') %>
+      <% link('/menu', 'Menu', '📋', 'menu.view') %>
+
+      <div class="nav__group">Money</div>
+      <% link('/invoices', 'Invoices', '🧾', 'billing.view') %>
+      <% link('/billing/outstanding', 'Outstanding', '⚠', 'billing.view') %>
+      <% link('/expenses', 'Expenses', '💸', 'expenses.view') %>
+
+      <div class="nav__group">Reports</div>
+      <% link('/reports', 'All Reports', '📚', 'reports.view', true) %>
+      <% link('/reports/daily', 'Daily Report', '🗓', 'reports.view') %>
+      <% link('/reports/monthly', 'Monthly Report', '📊', 'reports.pnl') %>
+      <% link('/reports/yearly', 'Year Summary', '📅', 'reports.pnl') %>
+      <% link('/reports/sales', 'Sales & Occupancy', '📈', 'reports.view') %>
+      <% link('/reports/rooms', 'Room Performance', '🚪', 'reports.view') %>
+      <% link('/reports/cashbook', 'Cash Book', '📒', 'reports.pnl') %>
+      <% link('/reports/tax', 'Tax Collected', '🧾', 'reports.pnl') %>
+
+      <% if (can('users.manage') || can('settings.manage') || can('backup.manage') || can('activity.view')) { %>
+        <div class="nav__group">Administration</div>
+        <% link('/admin/users', 'Staff & Logins', '🔑', 'users.manage') %>
+        <% link('/admin/settings', 'Settings', '⚙', 'settings.manage') %>
+        <% link('/admin/backup', 'Backup', '💾', 'backup.manage') %>
+        <% link('/admin/activity', 'Activity Log', '🕘', 'activity.view') %>
+        <% link('/admin/system', 'System', 'ℹ', 'settings.manage') %>
+      <% } %>
+    </nav>
+    <div class="sidebar__user">
+      <strong><%= currentUser.full_name %></strong>
+      <span><%= domain.ROLE_LABELS[currentUser.role] %></span>
+      <form method="post" action="/logout">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit">Sign out</button>
+      </form>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="menu-toggle" type="button" data-toggle-sidebar aria-label="Menu">☰</button>
+      <h1><%= typeof heading !== 'undefined' ? heading : title %></h1>
+      <div class="topbar__spacer"></div>
+      <% if (typeof topActions !== 'undefined' && topActions) { %><%- topActions %><% } %>
+      <span class="topbar__date"><%= fmtDate(today) %></span>
+    </header>
+    <main class="content <%= typeof narrow !== 'undefined' && narrow ? 'content--narrow' : '' %>">
+      <% flashes.forEach(function (f) { %>
+        <div class="flash flash--<%= f.type %>"><%= f.message %></div>
+      <% }) %>

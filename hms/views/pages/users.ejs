@@ -1,0 +1,108 @@
+<%- include('../partials/head', { heading: 'Staff & Logins' }) %>
+
+<div class="grid grid--2">
+  <div class="card">
+    <div class="card__head"><h2><%= users.length %> login(s)</h2></div>
+    <div class="card__body card__body--flush table-wrap">
+      <table class="data">
+        <thead><tr><th>User</th><th>Role</th><th>Last sign-in</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          <% users.forEach(function (u) { %>
+            <tr>
+              <td><strong><%= u.full_name %></strong><br><small class="muted"><%= u.username %></small></td>
+              <td><%= domain.ROLE_LABELS[u.role] %></td>
+              <td><small><%= u.last_login_at ? fmtDateTime(u.last_login_at) : 'Never' %></small></td>
+              <td>
+                <span class="badge badge--<%= u.is_active ? 'ok' : 'bad' %>"><%= u.is_active ? 'Active' : 'Disabled' %></span>
+                <% if (u.must_change_password) { %><br><small class="muted">Must set password</small><% } %>
+              </td>
+              <td class="right nowrap">
+                <button class="btn btn--sm" type="button"
+                  onclick='editUser(<%- JSON.stringify({ id: u.id, full_name: u.full_name, role: u.role, is_active: u.is_active }).replace(/'/g, "&#39;") %>)'>Edit</button>
+                <form method="post" action="/admin/users/<%= u.id %>/reset-password" style="display:inline"
+                      data-confirm="Reset the password for <%= u.username %>? They will need the new temporary password to sign in.">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button class="btn btn--sm" type="submit">Reset password</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div>
+    <div class="card" id="edit-card" style="display:none">
+      <div class="card__head"><h2>Edit login</h2></div>
+      <form method="post" id="edit-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="card__body">
+          <div class="field"><label for="edit-name">Full name</label><input id="edit-name" name="full_name" required></div>
+          <div class="field">
+            <label for="edit-role">Role</label>
+            <select id="edit-role" name="role">
+              <% roles.forEach(function (r) { %><option value="<%= r %>"><%= domain.ROLE_LABELS[r] %></option><% }) %>
+            </select>
+          </div>
+          <label class="check"><input type="checkbox" id="edit-active" name="is_active" value="1"><span>Active — can sign in</span></label>
+        </div>
+        <div class="card__foot btn-row">
+          <button class="btn btn--primary" type="submit">Save</button>
+          <button class="btn" type="button" onclick="document.getElementById('edit-card').style.display='none'">Cancel</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card__head"><h2>Add a login</h2></div>
+      <form method="post" action="/admin/users">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="card__body">
+          <div class="form-grid">
+            <div class="field"><label for="full_name">Full name</label><input id="full_name" name="full_name" required></div>
+            <div class="field"><label for="username">Username</label><input id="username" name="username" required></div>
+          </div>
+          <div class="field">
+            <label for="role">Role</label>
+            <select id="role" name="role">
+              <% roles.forEach(function (r) { %><option value="<%= r %>"><%= domain.ROLE_LABELS[r] %></option><% }) %>
+            </select>
+          </div>
+          <div class="field">
+            <label for="password">Temporary password</label>
+            <input id="password" name="password" type="text" required>
+            <small>Give this to the staff member. They must change it the first time they sign in.</small>
+          </div>
+        </div>
+        <div class="card__foot"><button class="btn btn--primary" type="submit">Create login</button></div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card__head"><h2>What each role can do</h2></div>
+      <div class="card__body">
+        <dl class="kv">
+          <dt>Administrator</dt><dd>Everything, including staff logins, settings and backups.</dd>
+          <dt>Front Desk</dt><dd>Bookings, check-in/out, guests, orders, invoices and payments. No staff or settings.</dd>
+          <dt>Restaurant / Waiter</dt><dd>Take and edit food orders, print KOTs. No billing, no reports.</dd>
+          <dt>Accountant</dt><dd>Invoices, payments, voiding, all reports and the activity log. Read-only on bookings.</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function editUser(u) {
+    var card = document.getElementById('edit-card');
+    document.getElementById('edit-form').action = '/admin/users/' + u.id;
+    document.getElementById('edit-name').value = u.full_name;
+    document.getElementById('edit-role').value = u.role;
+    document.getElementById('edit-active').checked = !!u.is_active;
+    card.style.display = '';
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+</script>
+
+<%- include('../partials/foot') %>

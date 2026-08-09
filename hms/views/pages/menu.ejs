@@ -1,0 +1,96 @@
+<%- include('../partials/head', { heading: 'Menu' }) %>
+
+<div class="menu-tabs">
+  <a class="menu-tab <%= category === 'all' ? 'is-active' : '' %>" href="/menu?category=all">All</a>
+  <% categories.forEach(function (c) { %>
+    <a class="menu-tab <%= category === c ? 'is-active' : '' %>" href="/menu?category=<%= c %>"><%= domain.MENU_CATEGORY_LABELS[c] %></a>
+  <% }) %>
+</div>
+
+<div class="grid grid--2">
+  <div class="card">
+    <div class="card__head"><h2><%= items.length %> item(s)</h2></div>
+    <div class="card__body card__body--flush table-wrap">
+      <% if (!items.length) { %>
+        <div class="table-empty">Nothing on this part of the menu yet.</div>
+      <% } else { %>
+        <table class="data">
+          <thead><tr><th>Item</th><th>Category</th><th class="num">Price</th><th>Status</th><% if (can('menu.manage')) { %><th></th><% } %></tr></thead>
+          <tbody>
+            <% items.forEach(function (item) { %>
+              <tr>
+                <td><strong><%= item.name %></strong><% if (item.description) { %><br><small class="muted"><%= item.description %></small><% } %></td>
+                <td><%= domain.MENU_CATEGORY_LABELS[item.category] %></td>
+                <td class="num"><%= hotel.currency_symbol %> <%= fmt(item.price_minor) %></td>
+                <td>
+                  <span class="badge badge--<%= item.is_available ? 'ok' : 'bad' %>"><%= item.is_available ? 'Available' : 'Off menu' %></span>
+                </td>
+                <% if (can('menu.manage')) { %>
+                  <td class="right nowrap">
+                    <a class="btn btn--sm" href="/menu?category=<%= category %>&edit=<%= item.id %>">Edit</a>
+                    <form method="post" action="/menu/<%= item.id %>/availability" style="display:inline">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <button class="btn btn--sm" type="submit"><%= item.is_available ? 'Take off' : 'Put back' %></button>
+                    </form>
+                  </td>
+                <% } %>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+  </div>
+
+  <% if (can('menu.manage')) { %>
+    <div class="card">
+      <div class="card__head"><h2><%= editing ? 'Edit "' + editing.name + '"' : 'Add a menu item' %></h2></div>
+      <form method="post" action="/menu">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="id" value="<%= editing ? editing.id : '' %>">
+        <div class="card__body">
+          <div class="field">
+            <label for="name">Item name</label>
+            <input id="name" name="name" value="<%= editing ? editing.name : '' %>" required>
+          </div>
+          <div class="form-grid">
+            <div class="field">
+              <label for="category">Category</label>
+              <select id="category" name="category">
+                <% categories.forEach(function (c) { %>
+                  <option value="<%= c %>" <%= (editing ? editing.category : category) === c ? 'selected' : '' %>><%= domain.MENU_CATEGORY_LABELS[c] %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="field">
+              <label for="price">Price</label>
+              <input id="price" name="price" type="number" step="0.01" min="0"
+                     value="<%= editing ? (editing.price_minor / 100).toFixed(2) : '0.00' %>" required>
+            </div>
+          </div>
+          <div class="field">
+            <label for="description">Description (optional)</label>
+            <input id="description" name="description" value="<%= editing ? editing.description : '' %>">
+          </div>
+          <label class="check">
+            <input type="checkbox" name="is_available" value="1" <%= !editing || editing.is_available ? 'checked' : '' %>>
+            <span>Available to order</span>
+          </label>
+        </div>
+        <div class="card__foot btn-row">
+          <button class="btn btn--primary" type="submit"><%= editing ? 'Save changes' : 'Add to menu' %></button>
+          <% if (editing) { %>
+            <a class="btn" href="/menu?category=<%= category %>">Cancel</a>
+            <form method="post" action="/menu/<%= editing.id %>/delete" style="display:inline"
+                  data-confirm="Delete &quot;<%= editing.name %>&quot; from the menu?">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="btn btn--danger" type="submit">Delete</button>
+            </form>
+          <% } %>
+        </div>
+      </form>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/foot') %>

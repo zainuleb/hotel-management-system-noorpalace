@@ -1,0 +1,39 @@
+<%- include('../partials/head', { heading: 'Kitchen Queue' }) %>
+
+<p class="muted">Open orders that have not been marked served. This page refreshes itself every 30 seconds.</p>
+
+<% if (!orders.length) { %>
+  <div class="card"><div class="table-empty">Nothing waiting. The kitchen is clear.</div></div>
+<% } else { %>
+  <div class="grid grid--3">
+    <% orders.forEach(function (o) { %>
+      <div class="card">
+        <div class="card__head">
+          <h3><%= o.order_type === 'room_service' ? 'Room ' + (o.room_number || '—') : 'Table ' + (o.table_no || '—') %></h3>
+          <div class="spacer"></div>
+          <span class="badge badge--warn"><%= domain.MEAL_LABELS[o.meal_type] %></span>
+        </div>
+        <div class="card__body">
+          <p class="muted mb-0"><small><%= o.code %> · <%= fmtDateTime(o.created_at) %> · <%= o.created_by_name || '' %></small></p>
+          <p class="mb-0"><strong><%= o.item_count %> item(s)</strong>
+            <% if (o.guest_full_name) { %> · <%= o.guest_full_name %><% } %></p>
+          <% if (o.notes) { %><div class="notice notice--warn mt-1"><%= o.notes %></div><% } %>
+        </div>
+        <div class="card__foot btn-row">
+          <a class="btn btn--sm" href="/orders/<%= o.id %>">Open</a>
+          <a class="btn btn--sm" href="/orders/<%= o.id %>/kot" target="_blank" rel="noopener">KOT</a>
+          <% if (can('orders.edit')) { %>
+            <form method="post" action="/orders/<%= o.id %>/serve">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="btn btn--sm btn--primary" type="submit">Served</button>
+            </form>
+          <% } %>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+<% } %>
+
+<script>setTimeout(function () { location.reload(); }, 30000);</script>
+
+<%- include('../partials/foot') %>

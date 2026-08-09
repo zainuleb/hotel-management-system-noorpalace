@@ -1,0 +1,107 @@
+<%- include('../partials/head', { heading: year + ' Summary' }) %>
+
+<div class="card no-print">
+  <div class="card__body">
+    <form class="filters" method="get" action="/reports/yearly">
+      <div class="btn-row">
+        <a class="btn btn--sm" href="/reports/yearly?year=<%= year - 1 %>">‹ <%= year - 1 %></a>
+        <span class="btn btn--sm btn--primary"><%= year %></span>
+        <a class="btn btn--sm" href="/reports/yearly?year=<%= year + 1 %>"><%= year + 1 %> ›</a>
+      </div>
+      <div style="flex:1"></div>
+      <button class="btn" type="button" onclick="window.print()">Print</button>
+      <a class="btn" href="/reports/export.csv?report=yearly&preset=custom&from=<%= year %>-01-01&to=<%= year %>-12-31">Export CSV</a>
+    </form>
+  </div>
+</div>
+
+<div class="print-head" style="display:none">
+  <h2><%= hotel.hotel_name %></h2>
+  <p>Year Summary — <%= year %></p>
+</div>
+
+<div class="grid grid--4" style="margin-bottom:1.1rem">
+  <div class="stat stat--brand">
+    <div class="stat__label">Total sale</div>
+    <div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(totals.total_sale_minor) %></div>
+    <div class="stat__meta"><%= months.length %> month(s) so far</div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Total expenses</div>
+    <div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(totals.expense_minor) %></div>
+  </div>
+  <div class="stat" style="border-color:<%= totals.profit_minor >= 0 ? 'var(--ok)' : 'var(--bad)' %>">
+    <div class="stat__label"><%= totals.profit_minor >= 0 ? 'Net profit' : 'Net loss' %></div>
+    <div class="stat__value" style="color:<%= totals.profit_minor >= 0 ? 'var(--ok)' : 'var(--bad)' %>">
+      <%= hotel.currency_symbol %> <%= fmt(Math.abs(totals.profit_minor)) %>
+    </div>
+    <div class="stat__meta">
+      <%= totals.total_sale_minor ? Math.round((totals.profit_minor / totals.total_sale_minor) * 100) : 0 %>% margin
+    </div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Average occupancy</div>
+    <div class="stat__value"><%= totals.occupancy_percent %>%</div>
+    <div class="stat__meta"><%= totals.rooms_sold %> room-nights sold</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card__head"><h2>Month by month</h2></div>
+  <div class="card__body card__body--flush table-wrap">
+    <% if (!months.length) { %>
+      <div class="table-empty">Nothing recorded for <%= year %> yet.</div>
+    <% } else { %>
+      <% var peak = Math.max.apply(null, months.map(function (m) { return m.total_sale_minor; }).concat([1])); %>
+      <table class="data">
+        <thead>
+          <tr><th>Month</th><th class="num">Rooms sold</th><th class="num">Occupancy</th>
+              <th class="num">Room</th><th class="num">Food</th><th class="num">Total sale</th>
+              <th class="num">Expenses</th><th class="num">Profit / loss</th><th style="width:14%"></th></tr>
+        </thead>
+        <tbody>
+          <% months.forEach(function (m) { %>
+            <tr>
+              <td><a href="/reports/monthly?month=<%= m.month %>"><%= m.label %></a></td>
+              <td class="num"><%= m.rooms_sold %></td>
+              <td class="num"><%= m.occupancy_percent %>%</td>
+              <td class="num"><%= fmt(m.room_minor) %></td>
+              <td class="num"><%= fmt(m.food_minor) %></td>
+              <td class="num"><%= fmt(m.total_sale_minor) %></td>
+              <td class="num"><%= m.expense_minor ? fmt(m.expense_minor) : '—' %></td>
+              <td class="num" style="color:<%= m.profit_minor >= 0 ? 'inherit' : 'var(--bad)' %>">
+                <strong><%= fmt(m.profit_minor) %></strong>
+              </td>
+              <td><div class="bar"><span style="width:<%= Math.round((m.total_sale_minor / peak) * 100) %>%"></span></div></td>
+            </tr>
+          <% }) %>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>Total</td>
+            <td class="num"><%= totals.rooms_sold %></td>
+            <td class="num"><%= totals.occupancy_percent %>%</td>
+            <td class="num"><%= fmt(totals.room_minor) %></td>
+            <td class="num"><%= fmt(totals.food_minor) %></td>
+            <td class="num"><%= fmt(totals.total_sale_minor) %></td>
+            <td class="num"><%= fmt(totals.expense_minor) %></td>
+            <td class="num"><%= fmt(totals.profit_minor) %></td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    <% } %>
+  </div>
+  <div class="card__foot">
+    <small class="muted">Click a month to open its full report. Months that have not happened yet are not shown.</small>
+  </div>
+</div>
+
+<style>
+  @media print {
+    .print-head { display: block !important; text-align: center; margin-bottom: 8mm; }
+    .print-head h2 { margin: 0; }
+    .card { page-break-inside: avoid; }
+  }
+</style>
+<%- include('../partials/foot') %>

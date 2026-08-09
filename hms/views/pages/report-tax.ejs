@@ -1,0 +1,66 @@
+<%- include('../partials/head', { heading: 'Tax Collected' }) %>
+<%- include('../partials/range-filter', { action: '/reports/tax', from: from, to: to, preset: preset, csv: 'tax' }) %>
+
+<div class="grid grid--3" style="margin-bottom:1.1rem">
+  <div class="stat stat--brand">
+    <div class="stat__label"><%= hotel.tax_label %> collected</div>
+    <div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(totals.tax) %></div>
+    <div class="stat__meta"><%= fmtDate(from) %> → <%= fmtDate(to) %></div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Taxable amount</div>
+    <div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(totals.taxable) %></div>
+    <div class="stat__meta">Room + food, after discounts</div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Invoices</div>
+    <div class="stat__value"><%= totals.invoices %></div>
+    <div class="stat__meta">Voided invoices excluded</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card__head"><h2>Month by month</h2></div>
+  <div class="card__body card__body--flush table-wrap">
+    <% if (!rows.length) { %>
+      <div class="table-empty">No invoices were raised in this period.</div>
+    <% } else { %>
+      <table class="data">
+        <thead>
+          <tr><th>Month</th><th class="num">Invoices</th><th class="num">Taxable amount</th>
+              <th class="num"><%= hotel.tax_label %></th><th class="num">Invoice total</th></tr>
+        </thead>
+        <tbody>
+          <% rows.forEach(function (r) { %>
+            <tr>
+              <td><%= r.month %></td>
+              <td class="num"><%= r.invoices %></td>
+              <td class="num"><%= fmt(r.taxable_minor) %></td>
+              <td class="num"><strong><%= fmt(r.tax_minor) %></strong></td>
+              <td class="num"><%= fmt(r.total_minor) %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>Total</td>
+            <td class="num"><%= totals.invoices %></td>
+            <td class="num"><%= fmt(totals.taxable) %></td>
+            <td class="num"><%= fmt(totals.tax) %></td>
+            <td class="num"><%= fmt(totals.total) %></td>
+          </tr>
+        </tfoot>
+      </table>
+    <% } %>
+  </div>
+  <div class="card__foot">
+    <small class="muted">
+      Tax is taken from what each invoice actually charged, not recalculated now — so changing the rate in
+      Settings never rewrites past figures. Voided invoices are excluded because no tax was ever due on them.
+      This is a working figure for your accountant, not a filed return.
+    </small>
+  </div>
+</div>
+
+<style>@media print { .card { page-break-inside: avoid; } }</style>
+<%- include('../partials/foot') %>

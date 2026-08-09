@@ -1,0 +1,39 @@
+<%- include('../partials/head', { heading: 'Guests' }) %>
+
+<div class="card">
+  <div class="card__body">
+    <form class="filters" method="get" action="/guests">
+      <div class="field field--grow">
+        <label for="q">Search guests</label>
+        <input id="q" name="q" type="search" value="<%= q %>" placeholder="Name, phone or CNIC / passport">
+      </div>
+      <button class="btn btn--primary" type="submit">Search</button>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card__head"><h2><%= guests.length %> guest record(s)</h2></div>
+  <div class="card__body card__body--flush table-wrap">
+    <% if (!guests.length) { %>
+      <div class="table-empty">No guests yet. They are created automatically with the first booking.</div>
+    <% } else { %>
+      <table class="data">
+        <thead><tr><th>Name</th><th>Phone</th><th>CNIC / Passport</th><th>Address</th><th>Added</th></tr></thead>
+        <tbody>
+          <% guests.forEach(function (g) { %>
+            <tr>
+              <td><a href="/guests/<%= g.id %>"><strong><%= g.full_name %></strong></a></td>
+              <td><%= g.phone || '—' %></td>
+              <td><%= g.id_number || '—' %></td>
+              <td class="muted"><%= g.address || '—' %></td>
+              <td><small><%= fmtDate(g.created_at) %></small></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

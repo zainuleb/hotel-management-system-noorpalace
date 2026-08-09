@@ -1,0 +1,133 @@
+<%- include('../partials/head', { heading: 'Invoice ' + invoice.number }) %>
+
+<div class="btn-row" style="margin-bottom:1rem">
+  <% var c = invoice.status === 'paid' ? 'ok' : (invoice.status === 'partial' ? 'warn' : (invoice.status === 'void' ? '' : 'bad')); %>
+  <span class="badge badge--<%= c %>" style="font-size:.85rem;padding:.3rem .7rem"><%= invoice.status.toUpperCase() %></span>
+  <a class="btn btn--primary" href="/invoices/<%= invoice.id %>/receipt" target="_blank" rel="noopener">Thermal receipt</a>
+  <a class="btn" href="/invoices/<%= invoice.id %>/print" target="_blank" rel="noopener">A4 invoice</a>
+  <% if (booking) { %><a class="btn" href="/bookings/<%= booking.id %>">Booking <%= booking.code %></a><% } %>
+</div>
+
+<div class="grid grid--2 grid--wide">
+  <div class="card">
+    <div class="card__head"><h2>Bill</h2><div class="spacer"></div><span class="muted"><%= fmtDateTime(invoice.created_at) %></span></div>
+    <div class="card__body">
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead>
+          <tbody>
+            <% groups.forEach(function (g) { %>
+              <tr><td colspan="4" class="bill-section__title"><%= g.label %></td></tr>
+              <% g.lines.forEach(function (l) { %>
+                <tr>
+                  <td><%= l.description %></td>
+                  <td class="num"><%= l.amount_minor < 0 ? '' : l.qty %></td>
+                  <td class="num"><%= l.amount_minor < 0 ? '' : fmt(l.unit_minor) %></td>
+                  <td class="num"><%= fmt(l.amount_minor) %></td>
+                </tr>
+              <% }) %>
+            <% }) %>
+            <% if (!groups.length) { %>
+              <tr><td colspan="4" class="table-empty">This invoice has no lines.</td></tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="totals mt-1">
+        <div><span>Room charges</span><span><%= fmt(invoice.room_charges_minor) %></span></div>
+        <div><span>Food charges</span><span><%= fmt(invoice.food_charges_minor) %></span></div>
+        <% if (invoice.discount_minor) { %><div><span>Discount</span><span>− <%= fmt(invoice.discount_minor) %></span></div><% } %>
+        <% if (invoice.tax_minor) { %><div><span><%= hotel.tax_label %> (<%= invoice.tax_percent %>%)</span><span><%= fmt(invoice.tax_minor) %></span></div><% } %>
+        <div class="grand"><span>Total</span><span><%= hotel.currency_symbol %> <%= fmt(invoice.total_minor) %></span></div>
+        <div><span>Paid</span><span><%= fmt(paid) %></span></div>
+        <% if (invoice.status !== 'void' && balance > 0) { %>
+          <div class="due"><span>Balance due</span><span><%= hotel.currency_symbol %> <%= fmt(balance) %></span></div>
+        <% } %>
+      </div>
+      <% if (invoice.notes) { %><p class="muted mt-1"><strong>Notes:</strong> <%= invoice.notes %></p><% } %>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <div class="card__head"><h2>Payments</h2></div>
+      <div class="card__body card__body--flush table-wrap">
+        <% if (!payments.length) { %>
+          <div class="table-empty">Nothing paid yet.</div>
+        <% } else { %>
+          <table class="data">
+            <thead><tr><th>When</th><th>Mode</th><th>Reference</th><th>Taken by</th><th class="num">Amount</th></tr></thead>
+            <tbody>
+              <% payments.forEach(function (p) { %>
+                <tr>
+                  <td><small><%= fmtDateTime(p.created_at) %></small></td>
+                  <td><%= domain.PAYMENT_MODE_LABELS[p.mode] %></td>
+                  <td class="muted"><%= p.reference || '—' %></td>
+                  <td><small><%= p.received_by_name || '—' %></small></td>
+                  <td class="num"><%= fmt(p.amount_minor) %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } %>
+      </div>
+
+      <% if (invoice.status !== 'void' && balance > 0 && can('billing.payment')) { %>
+        <div class="card__foot">
+          <form method="post" action="/invoices/<%= invoice.id %>/payments">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="form-grid">
+              <div class="field">
+                <label for="amount">Amount</label>
+                <input id="amount" name="amount" type="number" step="0.01" min="0.01"
+                       max="<%= (balance / 100).toFixed(2) %>" value="<%= (balance / 100).toFixed(2) %>" required>
+              </div>
+              <div class="field">
+                <label for="mode">Mode</label>
+                <select id="mode" name="mode">
+                  <% paymentModes.forEach(function (m) { %>
+                    <option value="<%= m %>"><%= domain.PAYMENT_MODE_LABELS[m] %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="field span-2">
+                <label for="reference">Reference (optional)</label>
+                <input id="reference" name="reference">
+              </div>
+            </div>
+            <button class="btn btn--primary btn--block" type="submit">Record payment</button>
+          </form>
+        </div>
+      <% } %>
+    </div>
+
+    <div class="card">
+      <div class="card__head"><h2>History</h2></div>
+      <div class="card__body">
+        <ul class="timeline">
+          <% history.forEach(function (h) { %>
+            <li><time><%= fmtDateTime(h.created_at) %> · <%= h.username %></time><%= h.action %><%= h.detail ? ' — ' + h.detail : '' %></li>
+          <% }) %>
+          <% if (!history.length) { %><li class="muted">Nothing recorded.</li><% } %>
+        </ul>
+      </div>
+      <% if (invoice.status !== 'void' && paid === 0 && can('billing.void')) { %>
+        <div class="card__foot">
+          <form method="post" action="/invoices/<%= invoice.id %>/void"
+                data-confirm="Void invoice <%= invoice.number %>? Its orders become billable again.">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="field"><label for="reason">Reason for voiding</label><input id="reason" name="reason"></div>
+            <button class="btn btn--danger" type="submit">Void invoice</button>
+          </form>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<% if (autoPrint === 'thermal') { %>
+  <script>window.open('/invoices/<%= invoice.id %>/receipt', '_blank');</script>
+<% } %>
+
+<%- include('../partials/foot') %>

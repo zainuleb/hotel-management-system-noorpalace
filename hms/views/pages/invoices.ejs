@@ -1,0 +1,74 @@
+<%- include('../partials/head', { heading: 'Invoices' }) %>
+
+<div class="grid grid--3" style="margin-bottom:1.1rem">
+  <div class="stat"><div class="stat__label">Billed</div><div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(totals.billed) %></div></div>
+  <div class="stat"><div class="stat__label">Collected</div><div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(totals.paid) %></div></div>
+  <div class="stat"><div class="stat__label">Outstanding</div><div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(totals.outstanding) %></div></div>
+</div>
+
+<div class="card">
+  <div class="card__body">
+    <form class="filters" method="get" action="/invoices">
+      <div class="field field--grow">
+        <label for="q">Search</label>
+        <input id="q" name="q" type="search" value="<%= filters.q %>" placeholder="Invoice number, guest or booking code">
+      </div>
+      <div class="field">
+        <label for="status">Status</label>
+        <select id="status" name="status" data-auto-submit>
+          <% [['all','All'],['outstanding','Outstanding'],['unpaid','Unpaid'],['partial','Part paid'],['paid','Paid'],['void','Void']].forEach(function (o) { %>
+            <option value="<%= o[0] %>" <%= filters.status === o[0] ? 'selected' : '' %>><%= o[1] %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="field">
+        <label for="kind">Type</label>
+        <select id="kind" name="kind" data-auto-submit>
+          <option value="all" <%= filters.kind === 'all' ? 'selected' : '' %>>All</option>
+          <option value="stay" <%= filters.kind === 'stay' ? 'selected' : '' %>>Guest stay</option>
+          <option value="food_sale" <%= filters.kind === 'food_sale' ? 'selected' : '' %>>Walk-in food sale</option>
+        </select>
+      </div>
+      <div class="field"><label for="from">From</label><input id="from" name="from" type="date" value="<%= filters.from %>"></div>
+      <div class="field"><label for="to">To</label><input id="to" name="to" type="date" value="<%= filters.to %>"></div>
+      <button class="btn btn--primary" type="submit">Filter</button>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card__head"><h2><%= invoices.length %> invoice(s)</h2></div>
+  <div class="card__body card__body--flush table-wrap">
+    <% if (!invoices.length) { %>
+      <div class="table-empty">No invoices match those filters.</div>
+    <% } else { %>
+      <table class="data">
+        <thead>
+          <tr><th>Number</th><th>Date</th><th>Guest</th><th>Type</th><th class="num">Total</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <% invoices.forEach(function (i) { %>
+            <tr>
+              <td><a href="/invoices/<%= i.id %>"><strong><%= i.number %></strong></a>
+                <% if (i.booking_code) { %><br><small class="muted"><%= i.booking_code %></small><% } %></td>
+              <td class="nowrap"><small><%= fmtDateTime(i.created_at) %></small></td>
+              <td><%= i.guest_name || '—' %></td>
+              <td><small><%= i.kind === 'stay' ? 'Stay' : 'Food sale' %></small></td>
+              <td class="num"><%= fmt(i.total_minor) %></td>
+              <td class="num"><%= fmt(i.paid_minor) %></td>
+              <td class="num <%= i.balance_minor > 0 && i.status !== 'void' ? 'due' : '' %>">
+                <%= i.status === 'void' ? '—' : fmt(i.balance_minor) %>
+              </td>
+              <td>
+                <% var c = i.status === 'paid' ? 'ok' : (i.status === 'partial' ? 'warn' : (i.status === 'void' ? '' : 'bad')); %>
+                <span class="badge badge--<%= c %>"><%= i.status %></span>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

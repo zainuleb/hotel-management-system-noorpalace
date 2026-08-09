@@ -1,0 +1,65 @@
+<%- include('../partials/head', { heading: 'Room Availability' }) %>
+
+<div class="card">
+  <div class="card__body">
+    <form class="filters" method="get" action="/rooms/availability">
+      <div class="field">
+        <label for="from">Check in</label>
+        <input id="from" name="from" type="date" value="<%= from %>" data-range-start required>
+      </div>
+      <div class="field">
+        <label for="to">Check out</label>
+        <input id="to" name="to" type="date" value="<%= to %>" min="<%= from %>" data-range-end required>
+      </div>
+      <div class="field">
+        <label for="room_type_id">Room type</label>
+        <select id="room_type_id" name="room_type_id">
+          <option value="0">All types</option>
+          <% roomTypes.forEach(function (t) { %>
+            <option value="<%= t.id %>" <%= typeId === t.id ? 'selected' : '' %>><%= t.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <button class="btn btn--primary" type="submit">Search</button>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card__head">
+    <h2><%= rooms.length %> room(s) free for the whole stay</h2>
+    <div class="spacer"></div>
+    <span class="muted"><%= fmtDate(from) %> → <%= fmtDate(to) %></span>
+  </div>
+  <div class="card__body card__body--flush table-wrap">
+    <% if (!rooms.length) { %>
+      <div class="table-empty">Nothing free for those dates. Try a shorter stay or a different room type.</div>
+    <% } else { %>
+      <table class="data">
+        <thead>
+          <tr><th>Room</th><th>Type</th><th>Floor</th><th>Sleeps</th><th>Amenities</th><th class="num">Rate / night</th><th></th></tr>
+        </thead>
+        <tbody>
+          <% rooms.forEach(function (room) { %>
+            <tr>
+              <td><strong><%= room.number %></strong></td>
+              <td><%= room.type_name %></td>
+              <td><%= room.floor || '—' %></td>
+              <td class="num"><%= room.capacity || room.type_capacity %></td>
+              <td class="muted"><%= room.amenities || '—' %></td>
+              <td class="num"><%= hotel.currency_symbol %> <%= fmt(room.base_rate) %></td>
+              <td class="right">
+                <% if (can('bookings.create')) { %>
+                  <a class="btn btn--sm btn--primary"
+                     href="/bookings/new?room_id=<%= room.id %>&arrival_date=<%= from %>&departure_date=<%= to %>">Book</a>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

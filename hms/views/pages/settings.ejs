@@ -1,0 +1,90 @@
+<%- include('../partials/head', { heading: 'Hotel Settings', narrow: true }) %>
+
+<form method="post" action="/admin/settings">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="card">
+    <div class="card__head"><h2>Hotel</h2></div>
+    <div class="card__body">
+      <div class="form-grid form-grid--2">
+        <div class="field span-2">
+          <label for="hotel_name">Hotel name</label>
+          <input id="hotel_name" name="hotel_name" value="<%= settings.hotel_name %>" required>
+          <small>Shown on every screen, invoice and receipt.</small>
+        </div>
+        <div class="field span-2"><label for="hotel_address">Address</label><input id="hotel_address" name="hotel_address" value="<%= settings.hotel_address %>"></div>
+        <div class="field"><label for="hotel_phone">Phone</label><input id="hotel_phone" name="hotel_phone" value="<%= settings.hotel_phone %>"></div>
+        <div class="field"><label for="hotel_email">Email</label><input id="hotel_email" name="hotel_email" value="<%= settings.hotel_email %>"></div>
+        <div class="field"><label for="checkin_time">Standard check-in time</label><input id="checkin_time" name="checkin_time" type="time" value="<%= settings.checkin_time %>"></div>
+        <div class="field"><label for="checkout_time">Standard check-out time</label><input id="checkout_time" name="checkout_time" type="time" value="<%= settings.checkout_time %>"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__head"><h2>Money</h2></div>
+    <div class="card__body">
+      <div class="form-grid form-grid--2">
+        <div class="field"><label for="currency_symbol">Currency symbol</label><input id="currency_symbol" name="currency_symbol" value="<%= settings.currency_symbol %>"></div>
+        <div class="field"><label for="currency_code">Currency code</label><input id="currency_code" name="currency_code" value="<%= settings.currency_code %>"></div>
+        <div class="field">
+          <label for="tax_percent">Tax percent</label>
+          <input id="tax_percent" name="tax_percent" type="number" step="0.01" min="0" max="100" value="<%= settings.tax_percent %>">
+          <small>Applied to (room + food − discount) on every invoice.</small>
+        </div>
+        <div class="field">
+          <label for="tax_label">Tax label</label>
+          <input id="tax_label" name="tax_label" value="<%= settings.tax_label %>">
+          <small>e.g. GST, Sales Tax, Service Tax.</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__head"><h2>Numbering &amp; printing</h2></div>
+    <div class="card__body">
+      <div class="form-grid">
+        <div class="field"><label for="invoice_prefix">Invoice prefix</label><input id="invoice_prefix" name="invoice_prefix" value="<%= settings.invoice_prefix %>"></div>
+        <div class="field"><label for="booking_prefix">Booking prefix</label><input id="booking_prefix" name="booking_prefix" value="<%= settings.booking_prefix %>"></div>
+        <div class="field"><label for="order_prefix">Order prefix</label><input id="order_prefix" name="order_prefix" value="<%= settings.order_prefix %>"></div>
+      </div>
+      <p class="muted"><small>Numbers are generated automatically and can never repeat — invoices run as
+        <code><%= settings.invoice_prefix %>-<%= today.slice(0, 4) %>-00001</code> and restart each year.</small></p>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="thermal_width_mm">Thermal printer width</label>
+          <select id="thermal_width_mm" name="thermal_width_mm">
+            <option value="80" <%= settings.thermal_width_mm === '80' ? 'selected' : '' %>>80 mm (standard)</option>
+            <option value="58" <%= settings.thermal_width_mm === '58' ? 'selected' : '' %>>58 mm (compact)</option>
+          </select>
+        </div>
+        <div class="field span-2">
+          <label for="receipt_footer">Receipt footer message</label>
+          <input id="receipt_footer" name="receipt_footer" value="<%= settings.receipt_footer %>">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__head"><h2>Food service</h2></div>
+    <div class="card__body">
+      <label class="check">
+        <input type="checkbox" name="package_includes_breakfast" value="1" <%= settings.package_includes_breakfast === '1' ? 'checked' : '' %>>
+        <span>
+          <strong>"Room + Meals" bookings get breakfast free</strong>
+          <small class="muted">Breakfast orders charged to a Room + Meals guest are marked complimentary automatically.
+            Staff can still change it on the order.</small>
+        </span>
+      </label>
+    </div>
+    <div class="card__foot btn-row">
+      <button class="btn btn--primary btn--lg" type="submit">Save settings</button>
+      <a class="btn" href="/">Cancel</a>
+    </div>
+  </div>
+</form>
+
+<%- include('../partials/foot') %>

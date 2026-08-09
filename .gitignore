@@ -1,0 +1,21 @@
+# Dependencies and build output — rebuilt with `npm install && npm run build`
+node_modules/
+dist/
+
+# Live data: the SQLite database, its WAL sidecars, and every backup.
+# This is real guest and financial data and must never leave the hotel's PC.
+data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
+# Logs and OS noise
+*.log
+.DS_Store
+Thumbs.db
+
+# --- Commercial documents -------------------------------------------------
+# The proposal names the customer and carries our rates and payment terms.
+# It is excluded while this repository is public. Once the repository is
+# private, delete the line below and commit the PDF.
+Hotel Management Software Proposal.pdf

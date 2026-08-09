@@ -1,0 +1,70 @@
+<%- include('../partials/head', { heading: 'Expense Categories', narrow: true }) %>
+
+<div class="card">
+  <div class="card__head">
+    <h2>Categories</h2>
+    <div class="spacer"></div>
+    <a class="btn btn--sm" href="/expenses">Back to expenses</a>
+  </div>
+  <div class="card__body card__body--flush table-wrap">
+    <table class="data">
+      <thead><tr><th>Name</th><th>Type</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        <% categories.forEach(function (c) { %>
+          <tr>
+            <td><strong><%= c.name %></strong></td>
+            <td><span class="badge badge--<%= c.kind === 'income' ? 'ok' : '' %>"><%= domain.LEDGER_KIND_LABELS[c.kind] %></span></td>
+            <td><span class="badge badge--<%= c.is_active ? 'ok' : 'bad' %>"><%= c.is_active ? 'In use' : 'Switched off' %></span></td>
+            <td class="right nowrap">
+              <a class="btn btn--sm" href="/expenses/categories?edit=<%= c.id %>">Edit</a>
+              <form method="post" action="/expenses/categories/<%= c.id %>/delete" style="display:inline"
+                    data-confirm="Delete the category &quot;<%= c.name %>&quot;?">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="btn btn--sm btn--danger" type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <div class="card__foot">
+    <form method="post" action="/expenses/categories">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="id" value="<%= editing ? editing.id : '' %>">
+      <div class="form-grid">
+        <div class="field">
+          <label for="name"><%= editing ? 'Rename' : 'New category' %></label>
+          <input id="name" name="name" value="<%= editing ? editing.name : '' %>" required>
+        </div>
+        <div class="field">
+          <label for="kind">Type</label>
+          <select id="kind" name="kind">
+            <option value="expense" <%= !editing || editing.kind === 'expense' ? 'selected' : '' %>>Expense — money out</option>
+            <option value="income" <%= editing && editing.kind === 'income' ? 'selected' : '' %>>Other income — money in</option>
+          </select>
+        </div>
+      </div>
+      <label class="check">
+        <input type="checkbox" name="is_active" value="1" <%= !editing || editing.is_active ? 'checked' : '' %>>
+        <span>In use — show it on the expense form</span>
+      </label>
+      <div class="btn-row">
+        <button class="btn btn--primary" type="submit"><%= editing ? 'Save' : 'Add category' %></button>
+        <% if (editing) { %><a class="btn" href="/expenses/categories">Cancel</a><% } %>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card__body">
+    <p class="mb-0 muted"><small>
+      A category that already has entries against it cannot be deleted or switched between expense and
+      income — that would rewrite past reports. Switch it off instead: it disappears from the entry form
+      but old figures stay exactly as they were.
+    </small></p>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

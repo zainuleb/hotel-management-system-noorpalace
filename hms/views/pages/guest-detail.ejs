@@ -1,0 +1,101 @@
+<%- include('../partials/head', { heading: guest.full_name }) %>
+
+<div class="grid grid--2">
+  <div class="card">
+    <div class="card__head"><h2>Guest details</h2></div>
+    <form method="post" action="/guests/<%= guest.id %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="card__body">
+        <div class="form-grid form-grid--2">
+          <div class="field span-2">
+            <label for="full_name">Full name</label>
+            <input id="full_name" name="full_name" value="<%= guest.full_name %>" <%= can('guests.manage') ? '' : 'readonly' %> required>
+          </div>
+          <div class="field">
+            <label for="id_number">CNIC / Passport</label>
+            <input id="id_number" name="id_number" value="<%= guest.id_number %>" <%= can('guests.manage') ? '' : 'readonly' %>>
+          </div>
+          <div class="field">
+            <label for="phone">Phone</label>
+            <input id="phone" name="phone" value="<%= guest.phone %>" <%= can('guests.manage') ? '' : 'readonly' %>>
+          </div>
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" name="email" value="<%= guest.email %>" <%= can('guests.manage') ? '' : 'readonly' %>>
+          </div>
+          <div class="field">
+            <label for="nationality">Nationality</label>
+            <input id="nationality" name="nationality" value="<%= guest.nationality %>" <%= can('guests.manage') ? '' : 'readonly' %>>
+          </div>
+          <div class="field span-2">
+            <label for="address">Address</label>
+            <input id="address" name="address" value="<%= guest.address %>" <%= can('guests.manage') ? '' : 'readonly' %>>
+          </div>
+          <div class="field span-2">
+            <label for="notes">Notes</label>
+            <textarea id="notes" name="notes" <%= can('guests.manage') ? '' : 'readonly' %>><%= guest.notes %></textarea>
+          </div>
+        </div>
+      </div>
+      <% if (can('guests.manage')) { %>
+        <div class="card__foot btn-row">
+          <button class="btn btn--primary" type="submit">Save</button>
+          <% if (can('bookings.create')) { %><a class="btn" href="/bookings/new">New booking</a><% } %>
+        </div>
+      <% } %>
+    </form>
+  </div>
+
+  <div>
+    <div class="card">
+      <div class="card__head"><h2>Stays</h2><div class="spacer"></div><span class="badge"><%= stays.length %></span></div>
+      <div class="card__body card__body--flush table-wrap">
+        <% if (!stays.length) { %>
+          <div class="table-empty">No stays recorded.</div>
+        <% } else { %>
+          <table class="data">
+            <thead><tr><th>Booking</th><th>Room</th><th>Dates</th><th>Status</th></tr></thead>
+            <tbody>
+              <% stays.forEach(function (b) { %>
+                <tr>
+                  <td><a href="/bookings/<%= b.id %>"><%= b.code %></a></td>
+                  <td><%= b.room_numbers || '—' %></td>
+                  <td class="nowrap"><small><%= fmtDate(b.arrival_date) %> → <%= fmtDate(b.departure_date) %></small></td>
+                  <td><span class="badge"><%= domain.BOOKING_STATUS_LABELS[b.status] %></span></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } %>
+      </div>
+    </div>
+
+    <% if (can('billing.view')) { %>
+      <div class="card">
+        <div class="card__head"><h2>Invoices</h2></div>
+        <div class="card__body card__body--flush table-wrap">
+          <% if (!invoices.length) { %>
+            <div class="table-empty">No invoices yet.</div>
+          <% } else { %>
+            <table class="data">
+              <thead><tr><th>Number</th><th>Date</th><th class="num">Total</th><th class="num">Paid</th><th>Status</th></tr></thead>
+              <tbody>
+                <% invoices.forEach(function (i) { %>
+                  <tr>
+                    <td><a href="/invoices/<%= i.id %>"><%= i.number %></a></td>
+                    <td><small><%= fmtDate(i.created_at) %></small></td>
+                    <td class="num"><%= fmt(i.total_minor) %></td>
+                    <td class="num"><%= fmt(i.paid_minor) %></td>
+                    <td><span class="badge badge--<%= i.status === 'paid' ? 'ok' : (i.status === 'void' ? '' : 'warn') %>"><%= i.status %></span></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

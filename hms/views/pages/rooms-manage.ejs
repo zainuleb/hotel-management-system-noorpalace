@@ -1,0 +1,180 @@
+<%- include('../partials/head', { heading: 'Rooms & Room Types' }) %>
+
+<div class="grid grid--2">
+  <div class="card">
+    <div class="card__head"><h2>Room types</h2></div>
+    <div class="card__body card__body--flush table-wrap">
+      <table class="data">
+        <thead><tr><th>Name</th><th class="num">Rate / night</th><th class="num">Sleeps</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          <% if (!roomTypes.length) { %>
+            <tr><td colspan="5" class="table-empty">Add your first room type below.</td></tr>
+          <% } %>
+          <% roomTypes.forEach(function (t) { %>
+            <tr>
+              <td><strong><%= t.name %></strong><% if (t.description) { %><br><small class="muted"><%= t.description %></small><% } %></td>
+              <td class="num"><%= hotel.currency_symbol %> <%= fmt(t.base_rate) %></td>
+              <td class="num"><%= t.capacity %></td>
+              <td><span class="badge badge--<%= t.is_active ? 'ok' : '' %>"><%= t.is_active ? 'Active' : 'Inactive' %></span></td>
+              <td class="right nowrap">
+                <button class="btn btn--sm" type="button"
+                  onclick='fillType(<%- JSON.stringify(t).replace(/'/g, '&#39;') %>)'>Edit</button>
+                <form method="post" action="/rooms/types/<%= t.id %>/delete" style="display:inline"
+                      data-confirm="Delete the room type &quot;<%= t.name %>&quot;?">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button class="btn btn--sm btn--danger" type="submit">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div class="card__foot">
+      <form method="post" action="/rooms/types" id="type-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="id" id="type-id" value="">
+        <div class="form-grid">
+          <div class="field"><label for="type-name">Type name</label><input id="type-name" name="name" required></div>
+          <div class="field"><label for="type-rate">Rate per night</label><input id="type-rate" name="base_rate" type="number" step="0.01" min="0" value="0" required></div>
+          <div class="field"><label for="type-capacity">Sleeps</label><input id="type-capacity" name="capacity" type="number" min="1" value="2"></div>
+          <div class="field span-2"><label for="type-desc">Description</label><input id="type-desc" name="description"></div>
+        </div>
+        <label class="check"><input type="checkbox" name="is_active" id="type-active" value="1" checked><span>Active</span></label>
+        <div class="btn-row">
+          <button class="btn btn--primary" type="submit">Save room type</button>
+          <button class="btn" type="button" onclick="resetType()">Clear</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__head"><h2>Rooms</h2><div class="spacer"></div><span class="badge"><%= rooms.length %></span></div>
+    <div class="card__body card__body--flush table-wrap">
+      <table class="data">
+        <thead><tr><th>Room</th><th>Type</th><th>Floor</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          <% if (!rooms.length) { %>
+            <tr><td colspan="5" class="table-empty">Add your first room below.</td></tr>
+          <% } %>
+          <% rooms.forEach(function (r) { %>
+            <tr>
+              <td><strong><%= r.number %></strong><% if (r.amenities) { %><br><small class="muted"><%= r.amenities %></small><% } %></td>
+              <td><%= r.type_name %></td>
+              <td><%= r.floor || '—' %></td>
+              <td>
+                <% if (!r.is_active) { %><span class="badge">Inactive</span>
+                <% } else if (r.is_out_of_service) { %><span class="badge badge--warn">Maintenance</span>
+                <% } else { %><span class="badge badge--ok">In service</span><% } %>
+                <% if (r.maintenance_note) { %><br><small class="muted"><%= r.maintenance_note %></small><% } %>
+              </td>
+              <td class="right nowrap">
+                <button class="btn btn--sm" type="button" onclick='fillRoom(<%- JSON.stringify(r).replace(/'/g, '&#39;') %>)'>Edit</button>
+                <form method="post" action="/rooms/<%= r.id %>/maintenance" style="display:inline">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="is_out_of_service" value="<%= r.is_out_of_service ? '' : '1' %>">
+                  <input type="hidden" name="maintenance_note" value="<%= r.is_out_of_service ? '' : 'Marked from room list' %>">
+                  <button class="btn btn--sm" type="submit"><%= r.is_out_of_service ? 'Back in service' : 'Maintenance' %></button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div class="card__foot">
+      <form method="post" action="/rooms" id="room-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="id" id="room-id" value="">
+        <div class="form-grid">
+          <div class="field"><label for="room-number">Room number</label><input id="room-number" name="number" required></div>
+          <div class="field">
+            <label for="room-type">Room type</label>
+            <select id="room-type" name="room_type_id" required>
+              <% roomTypes.filter(function (t) { return t.is_active; }).forEach(function (t) { %>
+                <option value="<%= t.id %>"><%= t.name %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="field"><label for="room-floor">Floor</label><input id="room-floor" name="floor"></div>
+          <div class="field"><label for="room-capacity">Sleeps (0 = use type)</label><input id="room-capacity" name="capacity" type="number" min="0" value="0"></div>
+          <div class="field span-2"><label for="room-amenities">Amenities</label><input id="room-amenities" name="amenities" placeholder="AC, TV, Wifi, Hot water"></div>
+        </div>
+        <label class="check"><input type="checkbox" name="is_active" id="room-active" value="1" checked><span>Active</span></label>
+        <div class="btn-row">
+          <button class="btn btn--primary" type="submit">Save room</button>
+          <button class="btn" type="button" onclick="resetRoom()">Clear</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card__head"><h2>Add a whole floor at once</h2></div>
+  <form method="post" action="/rooms/bulk">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="card__body">
+      <div class="form-grid form-grid--2">
+        <div class="field span-2">
+          <label for="bulk-numbers">Room numbers</label>
+          <input id="bulk-numbers" name="numbers" placeholder="101-108   or   201,202,205-210" required>
+          <small>Use a dash for a run of rooms, commas to list them, or both together.
+            Numbers that already exist are skipped rather than duplicated.</small>
+        </div>
+        <div class="field">
+          <label for="bulk-floor">Floor</label>
+          <input id="bulk-floor" name="floor" placeholder="Ground, 1st, 2nd…">
+        </div>
+        <div class="field">
+          <label for="bulk-type">Room type</label>
+          <select id="bulk-type" name="room_type_id" required>
+            <% roomTypes.filter(function (t) { return t.is_active; }).forEach(function (t) { %>
+              <option value="<%= t.id %>"><%= t.name %> · <%= hotel.currency_symbol %> <%= fmt(t.base_rate) %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="field span-2">
+          <label for="bulk-amenities">Amenities for all of them</label>
+          <input id="bulk-amenities" name="amenities" placeholder="AC, TV, Wifi, Hot water">
+        </div>
+      </div>
+    </div>
+    <div class="card__foot">
+      <button class="btn btn--primary" type="submit">Add these rooms</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  function fillType(t) {
+    document.getElementById('type-id').value = t.id;
+    document.getElementById('type-name').value = t.name;
+    document.getElementById('type-rate').value = (t.base_rate / 100).toFixed(2);
+    document.getElementById('type-capacity').value = t.capacity;
+    document.getElementById('type-desc').value = t.description || '';
+    document.getElementById('type-active').checked = !!t.is_active;
+    document.getElementById('type-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  function resetType() {
+    document.getElementById('type-form').reset();
+    document.getElementById('type-id').value = '';
+  }
+  function fillRoom(r) {
+    document.getElementById('room-id').value = r.id;
+    document.getElementById('room-number').value = r.number;
+    document.getElementById('room-type').value = r.room_type_id;
+    document.getElementById('room-floor').value = r.floor || '';
+    document.getElementById('room-capacity').value = r.capacity || 0;
+    document.getElementById('room-amenities').value = r.amenities || '';
+    document.getElementById('room-active').checked = !!r.is_active;
+    document.getElementById('room-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  function resetRoom() {
+    document.getElementById('room-form').reset();
+    document.getElementById('room-id').value = '';
+  }
+</script>
+
+<%- include('../partials/foot') %>

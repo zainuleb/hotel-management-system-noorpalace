@@ -1,0 +1,208 @@
+<%- include('../partials/head', { heading: 'Expenses' }) %>
+
+<div class="grid grid--4" style="margin-bottom:1.1rem">
+  <div class="stat">
+    <div class="stat__label">Expenses in this period</div>
+    <div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(expenseTotal) %></div>
+    <div class="stat__meta"><%= fmtDate(filters.from) %> → <%= fmtDate(filters.to) %></div>
+  </div>
+  <% if (incomeTotal) { %>
+    <div class="stat">
+      <div class="stat__label">Other income</div>
+      <div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(incomeTotal) %></div>
+    </div>
+  <% } %>
+  <div class="stat">
+    <div class="stat__label">Entries</div>
+    <div class="stat__value"><%= entries.length %></div>
+  </div>
+</div>
+
+<div class="grid grid--2 grid--wide">
+  <div>
+    <div class="card">
+      <div class="card__body">
+        <form class="filters" method="get" action="/expenses">
+          <div class="field"><label for="from">From</label><input id="from" name="from" type="date" value="<%= filters.from %>" data-range-start></div>
+          <div class="field"><label for="to">To</label><input id="to" name="to" type="date" value="<%= filters.to %>" data-range-end></div>
+          <div class="field">
+            <label for="category_id">Category</label>
+            <select id="category_id" name="category_id" data-auto-submit>
+              <option value="0">All categories</option>
+              <% categories.forEach(function (c) { %>
+                <option value="<%= c.id %>" <%= filters.category_id === c.id ? 'selected' : '' %>><%= c.name %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="field field--grow">
+            <label for="q">Search</label>
+            <input id="q" name="q" type="search" value="<%= filters.q %>" placeholder="Description, paid to, reference">
+          </div>
+          <button class="btn btn--primary" type="submit">Filter</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card__head">
+        <h2>Entries</h2>
+        <div class="spacer"></div>
+        <% if (can('reports.pnl')) { %><a class="btn btn--sm" href="/reports/monthly">Monthly report</a><% } %>
+      </div>
+      <div class="card__body card__body--flush table-wrap">
+        <% if (!entries.length) { %>
+          <div class="table-empty">Nothing recorded for these dates.</div>
+        <% } else { %>
+          <table class="data">
+            <thead>
+              <tr><th>Date</th><th>Category</th><th>Description</th><th>Paid to</th><th>Mode</th><th class="num">Amount</th><th></th></tr>
+            </thead>
+            <tbody>
+              <% entries.forEach(function (e) { %>
+                <tr>
+                  <td class="nowrap"><%= fmtDate(e.entry_date) %></td>
+                  <td>
+                    <span class="badge badge--<%= e.kind === 'income' ? 'ok' : '' %>"><%= e.category_name %></span>
+                  </td>
+                  <td><%= e.description %><% if (e.notes) { %><br><small class="muted"><%= e.notes %></small><% } %></td>
+                  <td class="muted"><%= e.paid_to || '—' %></td>
+                  <td><small><%= domain.PAYMENT_MODE_LABELS[e.payment_mode] %><% if (e.reference) { %><br><span class="muted"><%= e.reference %></span><% } %></small></td>
+                  <td class="num"><%= e.kind === 'income' ? '+' : '−' %> <%= fmt(e.amount_minor) %></td>
+                  <td class="right nowrap">
+                    <% if (can('expenses.manage')) { %>
+                      <a class="btn btn--sm" href="/expenses?from=<%= filters.from %>&to=<%= filters.to %>&edit=<%= e.id %>">Edit</a>
+                      <form method="post" action="/expenses/<%= e.id %>/delete" style="display:inline"
+                            data-confirm="Delete this entry?">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button class="btn btn--sm btn--danger" type="submit">Delete</button>
+                      </form>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="5">Total expenses</td>
+                <td class="num"><%= hotel.currency_symbol %> <%= fmt(expenseTotal) %></td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        <% } %>
+      </div>
+    </div>
+
+    <% if (totals.length) { %>
+      <div class="card">
+        <div class="card__head"><h2>By category</h2></div>
+        <div class="card__body card__body--flush table-wrap">
+          <table class="data">
+            <thead><tr><th>Category</th><th class="num">Entries</th><th class="num">Amount</th><th style="width:30%">Share</th></tr></thead>
+            <tbody>
+              <% var peak = Math.max.apply(null, totals.map(function (t) { return t.amount_minor; }).concat([1])); %>
+              <% totals.forEach(function (t) { %>
+                <tr>
+                  <td><%= t.category_name %> <% if (t.kind === 'income') { %><span class="badge badge--ok">income</span><% } %></td>
+                  <td class="num"><%= t.entries %></td>
+                  <td class="num"><%= fmt(t.amount_minor) %></td>
+                  <td><div class="bar"><span style="width:<%= Math.round((t.amount_minor / peak) * 100) %>%"></span></div></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+  <% if (can('expenses.manage')) { %>
+    <div>
+      <div class="card">
+        <div class="card__head">
+          <h2><%= editing ? 'Edit entry' : 'Record an expense' %></h2>
+          <div class="spacer"></div>
+          <a class="btn btn--sm" href="/expenses/categories">Categories</a>
+        </div>
+        <form method="post" action="/expenses">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="id" value="<%= editing ? editing.id : '' %>">
+          <input type="hidden" name="filter_from" value="<%= filters.from %>">
+          <input type="hidden" name="filter_to" value="<%= filters.to %>">
+          <div class="card__body">
+            <div class="form-grid">
+              <div class="field">
+                <label for="entry_date">Date</label>
+                <input id="entry_date" name="entry_date" type="date"
+                       value="<%= editing ? editing.entry_date : today %>" required>
+              </div>
+              <div class="field">
+                <label for="cat">Category</label>
+                <select id="cat" name="category_id" required>
+                  <% categories.forEach(function (c) { %>
+                    <option value="<%= c.id %>" <%= editing && editing.category_id === c.id ? 'selected' : '' %>>
+                      <%= c.name %><%= c.kind === 'income' ? ' (income)' : '' %>
+                    </option>
+                  <% }) %>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label for="description">Description</label>
+              <input id="description" name="description" value="<%= editing ? editing.description : '' %>"
+                     placeholder="e.g. LESCO bill for July" required>
+            </div>
+            <div class="form-grid">
+              <div class="field">
+                <label for="amount">Amount</label>
+                <input id="amount" name="amount" type="number" step="0.01" min="0.01"
+                       value="<%= editing ? (editing.amount_minor / 100).toFixed(2) : '' %>" required>
+              </div>
+              <div class="field">
+                <label for="payment_mode">Paid by</label>
+                <select id="payment_mode" name="payment_mode">
+                  <% paymentModes.forEach(function (m) { %>
+                    <option value="<%= m %>" <%= editing && editing.payment_mode === m ? 'selected' : '' %>>
+                      <%= domain.PAYMENT_MODE_LABELS[m] %>
+                    </option>
+                  <% }) %>
+                </select>
+              </div>
+            </div>
+            <div class="form-grid">
+              <div class="field">
+                <label for="paid_to">Paid to</label>
+                <input id="paid_to" name="paid_to" value="<%= editing ? editing.paid_to : '' %>"
+                       placeholder="Supplier or staff name">
+              </div>
+              <div class="field">
+                <label for="reference">Bill / voucher no.</label>
+                <input id="reference" name="reference" value="<%= editing ? editing.reference : '' %>">
+              </div>
+            </div>
+            <div class="field">
+              <label for="notes">Notes</label>
+              <input id="notes" name="notes" value="<%= editing ? editing.notes : '' %>">
+            </div>
+          </div>
+          <div class="card__foot btn-row">
+            <button class="btn btn--primary btn--lg" type="submit"><%= editing ? 'Save changes' : 'Record entry' %></button>
+            <% if (editing) { %><a class="btn" href="/expenses?from=<%= filters.from %>&to=<%= filters.to %>">Cancel</a><% } %>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="card__body">
+          <p class="mb-0 muted"><small>
+            Expenses are recorded against the <strong>date the money was spent</strong>, not the date you type them
+            in — so a bill entered late still lands in the right month. They feed straight into the
+            <a href="/reports/daily">daily</a> and <a href="/reports/monthly">monthly</a> profit figures.
+          </small></p>
+        </div>
+      </div>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/foot') %>

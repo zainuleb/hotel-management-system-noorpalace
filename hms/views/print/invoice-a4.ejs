@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Invoice <%= invoice.number %></title>
+<style>
+  @page { size: A4; margin: 14mm 14mm 16mm; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Segoe UI", Arial, Helvetica, sans-serif; font-size: 12px; color: #16211c; background: #fff; }
+  .sheet { max-width: 190mm; margin: 0 auto; padding: 10mm; }
+  .head { display: flex; justify-content: space-between; gap: 12mm; border-bottom: 3px solid #2e6b4f; padding-bottom: 5mm; margin-bottom: 6mm; }
+  .head h1 { margin: 0 0 1mm; font-size: 20px; color: #2e6b4f; }
+  .head .meta { text-align: right; white-space: nowrap; }
+  .head .meta .doc { font-size: 17px; font-weight: 700; letter-spacing: .05em; }
+  .parties { display: flex; gap: 12mm; margin-bottom: 6mm; }
+  .parties > div { flex: 1; }
+  .label { font-size: 9px; text-transform: uppercase; letter-spacing: .09em; color: #7a8a82; margin-bottom: 1mm; }
+  table.items { width: 100%; border-collapse: collapse; margin-bottom: 5mm; }
+  table.items th {
+    text-align: left; font-size: 9px; text-transform: uppercase; letter-spacing: .06em;
+    color: #46554d; border-bottom: 1.5px solid #16211c; padding: 2mm 2mm 1.5mm;
+  }
+  table.items td { padding: 1.6mm 2mm; border-bottom: 1px solid #e4eae7; vertical-align: top; }
+  table.items td.n, table.items th.n { text-align: right; white-space: nowrap; }
+  tr.section td { background: #eef4f0; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: #22523c; }
+  .totals { width: 78mm; margin-left: auto; }
+  .totals div { display: flex; justify-content: space-between; padding: 1.1mm 0; }
+  .totals .grand { border-top: 2px solid #16211c; margin-top: 1.5mm; padding-top: 2mm; font-size: 15px; font-weight: 700; }
+  .totals .due { color: #b3261e; font-weight: 700; }
+  .pay { margin-top: 6mm; }
+  .pay table { width: 100%; border-collapse: collapse; }
+  .pay td, .pay th { padding: 1.4mm 2mm; border-bottom: 1px solid #e4eae7; text-align: left; font-size: 11px; }
+  .foot { margin-top: 10mm; border-top: 1px solid #dde5e0; padding-top: 3mm; font-size: 10px; color: #7a8a82; display: flex; justify-content: space-between; }
+  .stamp { display: inline-block; padding: 1mm 3mm; border: 2px solid; border-radius: 3px; font-weight: 700; letter-spacing: .06em; }
+  .stamp--paid { color: #197c4b; border-color: #197c4b; }
+  .stamp--due  { color: #b3261e; border-color: #b3261e; }
+  .stamp--void { color: #7a8a82; border-color: #7a8a82; }
+  .toolbar { padding: 10px; text-align: center; background: #eee; }
+  .toolbar button, .toolbar a {
+    font: inherit; padding: 6px 14px; margin: 0 4px; border: 1px solid #bbb;
+    background: #fff; border-radius: 4px; cursor: pointer; text-decoration: none; color: #222;
+  }
+  @media print { .toolbar { display: none; } .sheet { padding: 0; } }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <button type="button" onclick="window.print()">Print</button>
+  <a href="/invoices/<%= invoice.id %>">Back to invoice</a>
+</div>
+
+<div class="sheet">
+  <div class="head">
+    <div>
+      <h1><%= settings.hotel_name %></h1>
+      <% if (settings.hotel_address) { %><div><%= settings.hotel_address %></div><% } %>
+      <% if (settings.hotel_phone) { %><div>Tel: <%= settings.hotel_phone %></div><% } %>
+      <% if (settings.hotel_email) { %><div><%= settings.hotel_email %></div><% } %>
+    </div>
+    <div class="meta">
+      <div class="doc"><%= invoice.kind === 'stay' ? 'INVOICE' : 'SALE INVOICE' %></div>
+      <div><strong><%= invoice.number %></strong></div>
+      <div><%= fmtDateTime(invoice.created_at) %></div>
+      <div style="margin-top:3mm">
+        <% if (invoice.status === 'void') { %><span class="stamp stamp--void">VOID</span>
+        <% } else if (balance <= 0) { %><span class="stamp stamp--paid">PAID</span>
+        <% } else { %><span class="stamp stamp--due">BALANCE DUE</span><% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="parties">
+    <div>
+      <div class="label">Billed to</div>
+      <div><strong><%= invoice.guest_name || 'Walk-in customer' %></strong></div>
+      <% if (invoice.guest_phone) { %><div><%= invoice.guest_phone %></div><% } %>
+    </div>
+    <% if (booking) { %>
+      <div>
+        <div class="label">Stay</div>
+        <div>Booking <strong><%= booking.code %></strong></div>
+        <div><%= fmtDate(booking.arrival_date) %> → <%= fmtDate(booking.departure_date) %></div>
+        <div><%= booking.adults %> adult(s)<%= booking.children ? ', ' + booking.children + ' child(ren)' : '' %></div>
+      </div>
+    <% } %>
+  </div>
+
+  <table class="items">
+    <thead>
+      <tr><th>Description</th><th class="n">Qty</th><th class="n">Rate</th><th class="n">Amount</th></tr>
+    </thead>
+    <tbody>
+      <% groups.forEach(function (g) { %>
+        <tr class="section"><td colspan="4"><%= g.label %></td></tr>
+        <% g.lines.forEach(function (l) { %>
+          <tr>
+            <td><%= l.description %></td>
+            <td class="n"><%= l.amount_minor < 0 ? '' : l.qty %></td>
+            <td class="n"><%= l.amount_minor < 0 ? '' : fmt(l.unit_minor) %></td>
+            <td class="n"><%= fmt(l.amount_minor) %></td>
+          </tr>
+        <% }) %>
+      <% }) %>
+    </tbody>
+  </table>
+
+  <div class="totals">
+    <% if (invoice.room_charges_minor) { %><div><span>Room charges</span><span><%= fmt(invoice.room_charges_minor) %></span></div><% } %>
+    <% if (invoice.food_charges_minor) { %><div><span>Food &amp; beverage</span><span><%= fmt(invoice.food_charges_minor) %></span></div><% } %>
+    <% if (invoice.discount_minor) { %><div><span>Discount</span><span>− <%= fmt(invoice.discount_minor) %></span></div><% } %>
+    <% if (invoice.tax_minor) { %><div><span><%= settings.tax_label %> (<%= invoice.tax_percent %>%)</span><span><%= fmt(invoice.tax_minor) %></span></div><% } %>
+    <div class="grand"><span>Total</span><span><%= settings.currency_symbol %> <%= fmt(invoice.total_minor) %></span></div>
+    <div><span>Paid</span><span><%= fmt(paid) %></span></div>
+    <% if (invoice.status !== 'void' && balance > 0) { %>
+      <div class="due"><span>Balance due</span><span><%= settings.currency_symbol %> <%= fmt(balance) %></span></div>
+    <% } %>
+  </div>
+
+  <% if (payments.length) { %>
+    <div class="pay">
+      <div class="label">Payments received</div>
+      <table>
+        <tr><th>Date</th><th>Mode</th><th>Reference</th><th style="text-align:right">Amount</th></tr>
+        <% payments.forEach(function (p) { %>
+          <tr>
+            <td><%= fmtDateTime(p.created_at) %></td>
+            <td><%= domain.PAYMENT_MODE_LABELS[p.mode] %></td>
+            <td><%= p.reference || '—' %></td>
+            <td style="text-align:right"><%= fmt(p.amount_minor) %></td>
+          </tr>
+        <% }) %>
+      </table>
+    </div>
+  <% } %>
+
+  <% if (invoice.notes) { %>
+    <p style="margin-top:6mm"><span class="label">Notes</span><br><%= invoice.notes %></p>
+  <% } %>
+
+  <div class="foot">
+    <span><%= settings.receipt_footer %></span>
+    <span>Prepared by <%= currentUser.full_name %> · <%= fmtDateTime(nowStamp) %></span>
+  </div>
+</div>
+
+<% if (autoPrint) { %>
+  <script>window.addEventListener('load', function () { setTimeout(function () { window.print(); }, 300); });</script>
+<% } %>
+</body>
+</html>

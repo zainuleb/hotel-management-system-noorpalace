@@ -1,0 +1,155 @@
+<%- include('../partials/head', { heading: 'Order ' + order.code }) %>
+
+<div class="btn-row" style="margin-bottom:1rem">
+  <% var sc = order.status === 'open' ? 'warn' : (order.status === 'cancelled' ? 'bad' : (order.status === 'settled' ? 'ok' : 'info')); %>
+  <span class="badge badge--<%= sc %>" style="font-size:.85rem;padding:.3rem .7rem"><%= domain.ORDER_STATUS_LABELS[order.status] %></span>
+  <span class="badge badge--<%= order.billing_mode === 'add_to_room' ? 'info' : (order.billing_mode === 'complimentary' ? 'brand' : 'ok') %>" style="font-size:.85rem;padding:.3rem .7rem"><%= domain.BILLING_MODE_LABELS[order.billing_mode] %></span>
+
+  <a class="btn" href="/orders/<%= order.id %>/kot" target="_blank" rel="noopener">Print KOT</a>
+
+  <% if (order.status === 'open' && can('orders.edit')) { %>
+    <form method="post" action="/orders/<%= order.id %>/serve">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="btn" type="submit">Mark served</button>
+    </form>
+  <% } %>
+  <% if ((order.status === 'open' || order.status === 'served') && can('orders.edit')) { %>
+    <a class="btn" href="/orders/<%= order.id %>/edit">Edit items</a>
+  <% } %>
+  <% if (order.invoice_id && can('billing.view')) { %>
+    <a class="btn" href="/invoices/<%= order.invoice_id %>">View receipt</a>
+  <% } %>
+</div>
+
+<div class="grid grid--2">
+  <div class="card">
+    <div class="card__head"><h2>Items</h2></div>
+    <div class="card__body card__body--flush table-wrap">
+      <table class="data">
+        <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Amount</th></tr></thead>
+        <tbody>
+          <% items.forEach(function (i) { %>
+            <tr>
+              <td><%= i.name_snapshot %><% if (i.note) { %><br><small class="muted"><%= i.note %></small><% } %></td>
+              <td class="num"><%= i.qty %></td>
+              <td class="num"><%= fmt(i.unit_minor) %></td>
+              <td class="num"><%= fmt(i.line_minor) %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+        <tfoot>
+          <tr><td colspan="3">Subtotal</td><td class="num"><%= fmt(order.subtotal_minor) %></td></tr>
+          <% if (order.discount_minor) { %>
+            <tr><td colspan="3">Discount</td><td class="num">− <%= fmt(order.discount_minor) %></td></tr>
+          <% } %>
+          <tr><td colspan="3">Total<% if (order.billing_mode === 'complimentary') { %> <small class="muted">(complimentary)</small><% } %></td>
+              <td class="num"><%= hotel.currency_symbol %> <%= fmt(order.total_minor) %></td></tr>
+        </tfoot>
+      </table>
+    </div>
+    <% if (order.notes) { %>
+      <div class="card__foot"><strong>Note:</strong> <%= order.notes %></div>
+    <% } %>
+  </div>
+
+  <div>
+    <div class="card">
+      <div class="card__head"><h2>Details</h2></div>
+      <div class="card__body">
+        <dl class="kv">
+          <dt>Type</dt><dd><%= order.order_type === 'room_service' ? 'Room service' : 'Dine-in' %></dd>
+          <% if (order.order_type === 'room_service' || order.booking_id) { %>
+            <dt>Room</dt><dd><%= order.room_number || '—' %></dd>
+            <dt>Guest</dt>
+            <dd><% if (order.booking_id) { %><a href="/bookings/<%= order.booking_id %>"><%= order.guest_full_name %> (<%= order.booking_code %>)</a><% } else { %>—<% } %></dd>
+          <% } else { %>
+            <dt>Table</dt><dd><%= order.table_no || '—' %></dd>
+            <dt>Customer</dt><dd><%= order.guest_name || 'Walk-in' %></dd>
+          <% } %>
+          <dt>Meal</dt><dd><%= domain.MEAL_LABELS[order.meal_type] %></dd>
+          <dt>Taken by</dt><dd><%= order.created_by_name || '—' %></dd>
+          <dt>Placed</dt><dd><%= fmtDateTime(order.created_at) %></dd>
+          <dt>KOT printed</dt><dd><%= order.kot_printed_at ? fmtDateTime(order.kot_printed_at) : 'Not yet' %></dd>
+        </dl>
+      </div>
+    </div>
+
+    <% if (order.status !== 'settled' && order.status !== 'cancelled' && can('orders.edit')) { %>
+      <div class="card">
+        <div class="card__head"><h2>Change how this is billed</h2></div>
+        <form method="post" action="/orders/<%= order.id %>/billing">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="card__body">
+            <div class="field">
+              <label for="billing_mode">Billing</label>
+              <select id="billing_mode" name="billing_mode">
+                <% Object.keys(domain.BILLING_MODE_LABELS).forEach(function (m) { %>
+                  <option value="<%= m %>" <%= order.billing_mode === m ? 'selected' : '' %>><%= domain.BILLING_MODE_LABELS[m] %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="field">
+              <label for="room_choice">Charge to room (only needed for "Add to Room")</label>
+              <select id="room_choice" name="room_choice">
+                <option value="">— keep as is —</option>
+                <% occupied.forEach(function (r) { %>
+                  <option value="<%= r.booking_id %>:<%= r.id %>" <%= order.booking_id === r.booking_id ? 'selected' : '' %>>
+                    Room <%= r.number %> · <%= r.guest_name %> (<%= r.code %>)
+                  </option>
+                <% }) %>
+              </select>
+            </div>
+            <small class="muted">No manager approval needed — switch freely until the order is billed.</small>
+          </div>
+          <div class="card__foot">
+            <button class="btn btn--primary" type="submit">Update billing</button>
+          </div>
+        </form>
+      </div>
+
+      <% if (order.billing_mode !== 'add_to_room' && can('billing.create')) { %>
+        <div class="card">
+          <div class="card__head"><h2>Take payment now</h2></div>
+          <form method="post" action="/orders/<%= order.id %>/settle">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="card__body">
+              <div class="form-grid">
+                <div class="field">
+                  <label for="payment_mode">Paid by</label>
+                  <select id="payment_mode" name="payment_mode">
+                    <% Object.keys(domain.PAYMENT_MODE_LABELS).forEach(function (m) { %>
+                      <option value="<%= m %>"><%= domain.PAYMENT_MODE_LABELS[m] %></option>
+                    <% }) %>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="payment_reference">Reference</label>
+                  <input id="payment_reference" name="payment_reference">
+                </div>
+              </div>
+              <p class="mb-0">Amount due: <strong><%= hotel.currency_symbol %> <%= fmt(order.total_minor) %></strong>
+                <small class="muted">plus <%= hotel.tax_label %> if set</small></p>
+            </div>
+            <div class="card__foot">
+              <button class="btn btn--primary btn--block" type="submit">Settle &amp; print receipt</button>
+            </div>
+          </form>
+        </div>
+      <% } %>
+
+      <% if (can('orders.cancel')) { %>
+        <div class="card">
+          <div class="card__body">
+            <form method="post" action="/orders/<%= order.id %>/cancel" data-confirm="Cancel order <%= order.code %>?">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <div class="field"><label for="reason">Reason</label><input id="reason" name="reason"></div>
+              <button class="btn btn--danger" type="submit">Cancel this order</button>
+            </form>
+          </div>
+        </div>
+      <% } %>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

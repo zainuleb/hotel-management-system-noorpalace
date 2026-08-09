@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KOT <%= order.code %></title>
+<style>
+  /* Kitchen Order Ticket — deliberately big type, no prices. The kitchen
+     needs to read it across a hot, badly lit room, not to know the total. */
+  :root { --w: <%= settings.thermal_width_mm %>mm; }
+  @page { size: var(--w) auto; margin: 0; }
+  body {
+    margin: 0 auto; padding: 4mm 3mm; width: var(--w);
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 13px; line-height: 1.4; color: #000; background: #fff;
+  }
+  .center { text-align: center; }
+  .xl { font-size: 20px; font-weight: 700; }
+  .lg { font-size: 15px; font-weight: 700; }
+  hr { border: 0; border-top: 1px dashed #000; margin: 2mm 0; }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 1mm 0; vertical-align: top; }
+  td.q { width: 12mm; font-size: 17px; font-weight: 700; }
+  .note { border: 1px solid #000; padding: 1.5mm; margin-top: 2mm; }
+  .toolbar { padding: 8px; text-align: center; background: #eee; font-family: sans-serif; }
+  .toolbar button, .toolbar a {
+    font: inherit; padding: 6px 14px; margin: 0 4px; border: 1px solid #bbb;
+    background: #fff; border-radius: 4px; cursor: pointer; text-decoration: none; color: #222;
+  }
+  @media print { .toolbar { display: none; } }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <button type="button" onclick="window.print()">Print</button>
+  <a href="/orders/<%= order.id %>">Back to order</a>
+</div>
+
+<div class="center">
+  <div class="lg">KITCHEN ORDER</div>
+  <div class="xl">
+    <%= order.order_type === 'room_service' ? 'ROOM ' + (order.room_number || '?') : 'TABLE ' + (order.table_no || '?') %>
+  </div>
+  <div><%= domain.MEAL_LABELS[order.meal_type].toUpperCase() %></div>
+</div>
+
+<hr>
+
+<div><%= order.code %> · <%= fmtDateTime(order.created_at) %></div>
+<div>Taken by: <%= order.created_by_name || '—' %></div>
+<% if (order.guest_full_name) { %><div>Guest: <%= order.guest_full_name %></div><% } %>
+<% if (order.order_type === 'dine_in' && order.guest_name) { %><div>Customer: <%= order.guest_name %></div><% } %>
+
+<hr>
+
+<table>
+  <% items.forEach(function (i) { %>
+    <tr>
+      <td class="q"><%= i.qty %> ×</td>
+      <td class="lg"><%= i.name_snapshot %>
+        <% if (i.note) { %><br><small>** <%= i.note %></small><% } %>
+      </td>
+    </tr>
+  <% }) %>
+</table>
+
+<% if (order.notes) { %>
+  <div class="note"><strong>NOTE:</strong> <%= order.notes %></div>
+<% } %>
+
+<hr>
+<div class="center"><small>Printed <%= fmtDateTime(nowStamp) %></small></div>
+
+<% if (autoPrint) { %>
+  <script>window.addEventListener('load', function () { setTimeout(function () { window.print(); }, 250); });</script>
+<% } %>
+</body>
+</html>

@@ -1,0 +1,371 @@
+<%- include('../partials/head', { heading: 'Admin Dashboard' }) %>
+
+<%
+  function arrow(pct) {
+    if (pct === null || pct === undefined) return '';
+    if (pct > 0) return '▲ ' + pct + '%';
+    if (pct < 0) return '▼ ' + Math.abs(pct) + '%';
+    return '— level';
+  }
+  // A period with nothing before it has no meaningful percentage; say so rather
+  // than printing a stray separator or a misleading arrow.
+  function delta(pct, suffix) {
+    var a = arrow(pct);
+    if (!a) return 'no comparable data before this';
+    return a + (suffix || '');
+  }
+  function tone(pct, goodWhenUp) {
+    if (pct === null || pct === undefined || pct === 0) return 'var(--ink-3)';
+    var up = pct > 0;
+    return (goodWhenUp ? up : !up) ? 'var(--ok)' : 'var(--bad)';
+  }
+%>
+
+<div class="card no-print">
+  <div class="card__body">
+    <form class="filters" method="get" action="/admin">
+      <div class="btn-row">
+        <% [['today','Today'],['yesterday','Yesterday'],['week','Last 7 days'],['month','This month'],['last_month','Last month'],['year','This year']].forEach(function (p) { %>
+          <a class="btn btn--sm <%= period.preset === p[0] ? 'btn--primary' : '' %>" href="/admin?preset=<%= p[0] %>"><%= p[1] %></a>
+        <% }) %>
+      </div>
+      <div class="field"><label for="from">From</label><input id="from" name="from" type="date" value="<%= period.from %>"></div>
+      <div class="field"><label for="to">To</label><input id="to" name="to" type="date" value="<%= period.to %>"></div>
+      <input type="hidden" name="preset" value="custom">
+      <button class="btn" type="submit">Apply</button>
+      <div style="flex:1"></div>
+      <button class="btn" type="button" onclick="window.print()">Print</button>
+    </form>
+  </div>
+</div>
+
+<p class="muted" style="margin-top:-.4rem">
+  <%= period.label %> · <%= fmtDate(period.from) %> → <%= fmtDate(period.to) %>
+  <span class="muted">· compared with <%= fmtDate(cmp.previous_from) %> → <%= fmtDate(cmp.previous_to) %></span>
+</p>
+
+<div class="grid grid--4" style="margin-bottom:1.1rem">
+  <div class="stat stat--brand">
+    <div class="stat__label">Total sale</div>
+    <div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(pnl.total_sale_minor) %></div>
+    <div class="stat__meta"><%= delta(cmp.change.total_sale, ' vs previous period') %></div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Total expenses</div>
+    <div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(pnl.expense_total_minor) %></div>
+    <div class="stat__meta" style="color:<%= tone(cmp.change.expenses, false) %>"><%= delta(cmp.change.expenses, ' vs previous period') %></div>
+  </div>
+  <div class="stat" style="border-color:<%= pnl.profit_minor >= 0 ? 'var(--ok)' : 'var(--bad)' %>">
+    <div class="stat__label"><%= pnl.profit_minor >= 0 ? 'Net profit' : 'Net loss' %></div>
+    <div class="stat__value" style="color:<%= pnl.profit_minor >= 0 ? 'var(--ok)' : 'var(--bad)' %>">
+      <%= hotel.currency_symbol %> <%= fmt(Math.abs(pnl.profit_minor)) %>
+    </div>
+    <div class="stat__meta" style="color:<%= tone(cmp.change.profit, true) %>">
+      <% var margin = pnl.total_sale_minor ? Math.round((pnl.profit_minor / pnl.total_sale_minor) * 100) : 0; %>
+      <%= margin %>% margin<%= arrow(cmp.change.profit) ? ' · ' + arrow(cmp.change.profit) : '' %>
+    </div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Occupancy</div>
+    <div class="stat__value"><%= pnl.occupancy_percent %>%</div>
+    <div class="stat__meta" style="color:<%= tone(cmp.change.occupancy, true) %>">
+      <%= pnl.rooms_sold %> room-nights<%= arrow(cmp.change.occupancy) ? ' · ' + arrow(cmp.change.occupancy) : '' %>
+    </div>
+    <div class="bar mt-1"><span style="width:<%= Math.min(100, pnl.occupancy_percent) %>%"></span></div>
+  </div>
+</div>
+
+<% if (attention.rooms_without_rate) { %>
+  <div class="notice notice--warn" style="margin-bottom:1.1rem">
+    <strong><%= attention.rooms_without_rate %> room(s) still have no nightly rate.</strong>
+    Bookings for them will be charged nothing. <a href="/rooms/manage">Set the rates</a>.
+  </div>
+<% } %>
+
+<div class="grid grid--2 grid--wide">
+  <div class="card">
+    <div class="card__head">
+      <h2>Where the money came from</h2>
+      <div class="spacer"></div>
+      <a class="btn btn--sm no-print" href="/reports/monthly">Monthly report</a>
+    </div>
+    <div class="card__body card__body--flush table-wrap">
+      <table class="data">
+        <thead><tr><th>Source</th><th class="num">This period</th><th class="num">Previous</th><th class="num">Change</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Room rent<br><small class="muted">average <%= fmt(pnl.average_rate_minor) %> per room-night</small></td>
+            <td class="num"><%= fmt(pnl.room_revenue_minor) %></td>
+            <td class="num muted"><%= fmt(cmp.previous.room_revenue_minor) %></td>
+            <td class="num" style="color:<%= tone(cmp.change.room_revenue, true) %>"><%= arrow(cmp.change.room_revenue) %></td>
+          </tr>
+          <tr>
+            <td>Restaurant<br><small class="muted">
+              <%= fmt(pnl.food_add_to_room_minor) %> to rooms · <%= fmt(pnl.food_cash_now_minor) %> cash</small></td>
+            <td class="num"><%= fmt(pnl.food_revenue_minor) %></td>
+            <td class="num muted"><%= fmt(cmp.previous.food_revenue_minor) %></td>
+            <td class="num" style="color:<%= tone(cmp.change.food_revenue, true) %>"><%= arrow(cmp.change.food_revenue) %></td>
+          </tr>
+          <% if (pnl.other_income_minor || cmp.previous.other_income_minor) { %>
+            <tr>
+              <td>Other income</td>
+              <td class="num"><%= fmt(pnl.other_income_minor) %></td>
+              <td class="num muted"><%= fmt(cmp.previous.other_income_minor) %></td>
+              <td class="num"></td>
+            </tr>
+          <% } %>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>Total sale</td>
+            <td class="num"><%= fmt(pnl.total_sale_minor) %></td>
+            <td class="num muted"><%= fmt(cmp.previous.total_sale_minor) %></td>
+            <td class="num" style="color:<%= tone(cmp.change.total_sale, true) %>"><%= arrow(cmp.change.total_sale) %></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__head">
+      <h2>Where it went</h2>
+      <div class="spacer"></div>
+      <a class="btn btn--sm no-print" href="/expenses?from=<%= period.from %>&to=<%= period.to %>">Open ledger</a>
+    </div>
+    <div class="card__body card__body--flush table-wrap">
+      <% if (!pnl.expenses_by_category.length) { %>
+        <div class="table-empty">No expenses recorded for this period.<br>
+          <a href="/expenses">Record the first one</a>.</div>
+      <% } else { %>
+        <% var peak = Math.max.apply(null, pnl.expenses_by_category.map(function (c) { return c.amount_minor; }).concat([1])); %>
+        <table class="data">
+          <thead><tr><th>Category</th><th class="num">Amount</th><th class="num">% of sale</th><th style="width:24%">Share</th></tr></thead>
+          <tbody>
+            <% pnl.expenses_by_category.forEach(function (c) { %>
+              <tr>
+                <td><%= c.category_name %></td>
+                <td class="num"><%= fmt(c.amount_minor) %></td>
+                <td class="num muted">
+                  <%= pnl.total_sale_minor ? Math.round((c.amount_minor / pnl.total_sale_minor) * 100) : 0 %>%
+                </td>
+                <td><div class="bar"><span style="width:<%= Math.round((c.amount_minor / peak) * 100) %>%"></span></div></td>
+              </tr>
+            <% }) %>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>Total expenses</td>
+              <td class="num"><%= fmt(pnl.expense_total_minor) %></td>
+              <td class="num"><%= pnl.total_sale_minor ? Math.round((pnl.expense_total_minor / pnl.total_sale_minor) * 100) : 0 %>%</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid--3">
+  <div class="card">
+    <div class="card__head"><h2>Cash position</h2></div>
+    <div class="card__body card__body--flush table-wrap">
+      <table class="data">
+        <tbody>
+          <tr><td>Received in this period</td><td class="num"><%= fmt(cash.in_minor) %></td></tr>
+          <tr><td>Paid out in this period</td><td class="num">− <%= fmt(cash.out_minor) %></td></tr>
+          <tr><td><strong>Net movement</strong></td>
+              <td class="num" style="color:<%= cash.net_minor >= 0 ? 'var(--ok)' : 'var(--bad)' %>">
+                <strong><%= fmt(cash.net_minor) %></strong></td></tr>
+          <tr><td>Still owed by guests</td>
+              <td class="num" style="color:var(--bad)"><%= fmt(outstandingTotal) %></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card__foot btn-row no-print">
+      <a class="btn btn--sm" href="/reports/cashbook?preset=custom&from=<%= period.from %>&to=<%= period.to %>">Cash book</a>
+      <a class="btn btn--sm" href="/billing/outstanding"><%= outstandingCount %> unpaid bill(s)</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__head"><h2>Needs attention</h2></div>
+    <div class="card__body card__body--flush table-wrap">
+      <table class="data">
+        <tbody>
+          <tr><td>Guests in house</td><td class="num"><%= attention.in_house %></td></tr>
+          <tr><td>Arrivals still to check in today</td><td class="num"><%= attention.arrivals_today %></td></tr>
+          <tr><td>Departures still to check out today</td><td class="num"><%= attention.departures_today %></td></tr>
+          <tr><td>Open kitchen orders</td><td class="num"><%= attention.open_orders %></td></tr>
+          <tr>
+            <td>Food on rooms, not yet billed</td>
+            <td class="num"><%= fmt(attention.unbilled_room_food_minor) %></td>
+          </tr>
+          <tr><td>Rooms under maintenance</td><td class="num"><%= attention.rooms_maintenance %></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__head"><h2>Quick expense</h2></div>
+    <% if (can('expenses.manage')) { %>
+      <form method="post" action="/expenses">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="filter_from" value="<%= period.from %>">
+        <input type="hidden" name="filter_to" value="<%= period.to %>">
+        <div class="card__body">
+          <div class="form-grid">
+            <div class="field">
+              <label for="q-date">Date</label>
+              <input id="q-date" name="entry_date" type="date" value="<%= today %>" required>
+            </div>
+            <div class="field">
+              <label for="q-cat">Category</label>
+              <select id="q-cat" name="category_id" required>
+                <% categories.forEach(function (c) { %>
+                  <option value="<%= c.id %>"><%= c.name %><%= c.kind === 'income' ? ' (income)' : '' %></option>
+                <% }) %>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="q-desc">Description</label>
+            <input id="q-desc" name="description" placeholder="e.g. LESCO bill for July" required>
+          </div>
+          <div class="form-grid">
+            <div class="field">
+              <label for="q-amount">Amount</label>
+              <input id="q-amount" name="amount" type="number" step="0.01" min="0.01" required>
+            </div>
+            <div class="field">
+              <label for="q-mode">Paid by</label>
+              <select id="q-mode" name="payment_mode">
+                <% Object.keys(domain.PAYMENT_MODE_LABELS).forEach(function (m) { %>
+                  <option value="<%= m %>"><%= domain.PAYMENT_MODE_LABELS[m] %></option>
+                <% }) %>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="card__foot btn-row">
+          <button class="btn btn--primary" type="submit">Record</button>
+          <a class="btn" href="/expenses">Full ledger</a>
+        </div>
+      </form>
+    <% } else { %>
+      <div class="card__body"><p class="muted mb-0">Your role can view expenses but not add them.</p></div>
+    <% } %>
+  </div>
+</div>
+
+<div class="grid grid--2 grid--wide">
+  <div class="card">
+    <div class="card__head">
+      <h2>Best performing rooms</h2>
+      <div class="spacer"></div>
+      <a class="btn btn--sm no-print" href="/reports/rooms?preset=custom&from=<%= period.from %>&to=<%= period.to %>">All rooms</a>
+    </div>
+    <div class="card__body card__body--flush table-wrap">
+      <% if (!rooms.length) { %>
+        <div class="table-empty">No rooms set up yet.</div>
+      <% } else { %>
+        <table class="data">
+          <thead><tr><th>Room</th><th class="num">Nights</th><th class="num">Occupancy</th><th class="num">Room</th><th class="num">Food</th><th class="num">Total</th></tr></thead>
+          <tbody>
+            <% rooms.forEach(function (r) { %>
+              <tr>
+                <td><strong><%= r.room_number %></strong> <small class="muted"><%= r.type_name %></small></td>
+                <td class="num"><%= r.nights_sold %></td>
+                <td class="num"><%= r.occupancy_percent %>%</td>
+                <td class="num"><%= fmt(r.room_revenue_minor) %></td>
+                <td class="num"><%= fmt(r.food_revenue_minor) %></td>
+                <td class="num"><strong><%= fmt(r.total_revenue_minor) %></strong></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__head">
+      <h2>Latest expenses</h2>
+      <div class="spacer"></div>
+      <a class="btn btn--sm no-print" href="/expenses?from=<%= period.from %>&to=<%= period.to %>">All</a>
+    </div>
+    <div class="card__body card__body--flush table-wrap">
+      <% if (!recentExpenses.length) { %>
+        <div class="table-empty">Nothing recorded in this period.</div>
+      <% } else { %>
+        <table class="data">
+          <thead><tr><th>Date</th><th>Category</th><th>Description</th><th class="num">Amount</th></tr></thead>
+          <tbody>
+            <% recentExpenses.forEach(function (e) { %>
+              <tr>
+                <td class="nowrap"><small><%= fmtDate(e.entry_date) %></small></td>
+                <td><span class="badge badge--<%= e.kind === 'income' ? 'ok' : '' %>"><%= e.category_name %></span></td>
+                <td><%= e.description %></td>
+                <td class="num"><%= e.kind === 'income' ? '+' : '−' %> <%= fmt(e.amount_minor) %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid--2 grid--wide">
+  <div class="card no-print">
+    <div class="card__head"><h2>Everything else</h2></div>
+    <div class="card__body">
+      <div class="btn-row">
+        <a class="btn" href="/reports">All reports</a>
+        <a class="btn" href="/reports/daily">Daily report</a>
+        <a class="btn" href="/reports/monthly">Monthly report</a>
+        <a class="btn" href="/reports/yearly">Year summary</a>
+        <a class="btn" href="/reports/tax">Tax</a>
+      </div>
+      <div class="btn-row mt-1">
+        <% if (can('users.manage')) { %><a class="btn" href="/admin/users">Staff &amp; logins (<%= attention.staff %>)</a><% } %>
+        <% if (can('settings.manage')) { %><a class="btn" href="/admin/settings">Settings</a><% } %>
+        <% if (can('rooms.manage')) { %><a class="btn" href="/rooms/manage">Rooms</a><% } %>
+        <% if (can('menu.manage')) { %><a class="btn" href="/menu">Menu</a><% } %>
+        <% if (can('backup.manage')) { %><a class="btn" href="/admin/backup">Backup</a><% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__head">
+      <h2>Recent activity</h2>
+      <div class="spacer"></div>
+      <% if (can('activity.view')) { %><a class="btn btn--sm no-print" href="/admin/activity">Full log</a><% } %>
+    </div>
+    <div class="card__body">
+      <ul class="timeline">
+        <% activity.forEach(function (h) { %>
+          <li><time><%= fmtDateTime(h.created_at) %> · <%= h.username %></time><%= h.action %><%= h.detail ? ' — ' + h.detail : '' %></li>
+        <% }) %>
+        <% if (!activity.length) { %><li class="muted">Nothing yet.</li><% } %>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<p class="muted"><small>
+  Income is counted on the night it was earned, not the day the guest paid, and all figures exclude
+  <%= hotel.tax_label %>. The cash position above is the other view — money that actually moved.
+</small></p>
+
+<style>
+  @media print {
+    .grid { display: block; }
+    .card { page-break-inside: avoid; margin-bottom: 6mm; }
+  }
+</style>
+
+<%- include('../partials/foot') %>

@@ -1,0 +1,198 @@
+<%- include('../partials/head', { heading: 'Dashboard' }) %>
+
+<div class="grid grid--4" style="margin-bottom:1.1rem">
+  <div class="stat stat--brand">
+    <div class="stat__label">Revenue billed today</div>
+    <div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(data.revenue_today.billed_minor) %></div>
+    <div class="stat__meta">Collected <%= hotel.currency_symbol %> <%= fmt(data.revenue_today.collected_minor) %> · <%= data.revenue_today.invoice_count %> invoice(s)</div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Occupancy</div>
+    <div class="stat__value"><%= data.occupancy_percent %>%</div>
+    <div class="stat__meta"><%= data.rooms_occupied %> of <%= data.rooms_total %> rooms occupied</div>
+    <div class="bar mt-1"><span style="width:<%= data.occupancy_percent %>%"></span></div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Arrivals / Departures</div>
+    <div class="stat__value"><%= data.arrivals_today %> <span class="muted">/</span> <%= data.departures_today %></div>
+    <div class="stat__meta"><%= data.in_house %> guest(s) in house</div>
+  </div>
+  <% if (pnl) { %>
+    <div class="stat" style="border-color:<%= pnl.profit_minor >= 0 ? 'var(--ok)' : 'var(--bad)' %>">
+      <div class="stat__label">Today's <%= pnl.profit_minor >= 0 ? 'profit' : 'loss' %></div>
+      <div class="stat__value" style="color:<%= pnl.profit_minor >= 0 ? 'var(--ok)' : 'var(--bad)' %>">
+        <%= hotel.currency_symbol %> <%= fmt(Math.abs(pnl.profit_minor)) %>
+      </div>
+      <div class="stat__meta">
+        Earned <%= fmt(pnl.total_sale_minor) %> · spent <%= fmt(pnl.expense_total_minor) %>
+        · <a href="/reports/daily">daily report</a>
+      </div>
+    </div>
+  <% } %>
+  <div class="stat">
+    <div class="stat__label">Outstanding</div>
+    <div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(data.outstanding_minor) %></div>
+    <div class="stat__meta"><%= data.outstanding_count %> unpaid or partly paid bill(s)</div>
+  </div>
+</div>
+
+<% if (can('bookings.create') || can('orders.create') || can('expenses.manage')) { %>
+  <div class="btn-row" style="margin-bottom:1.1rem">
+    <% if (can('bookings.create')) { %>
+      <a class="btn btn--primary" href="/bookings/new">＋ New booking</a>
+      <a class="btn" href="/rooms/availability">Check availability</a>
+    <% } %>
+    <% if (can('orders.create')) { %>
+      <a class="btn" href="/orders/new?order_type=room_service">＋ Room service order</a>
+      <a class="btn" href="/orders/new?order_type=dine_in">＋ Dine-in order</a>
+    <% } %>
+    <% if (can('expenses.manage')) { %>
+      <a class="btn" href="/expenses">＋ Record an expense</a>
+    <% } %>
+  </div>
+<% } %>
+
+<% if (data.unbilled_room_food_minor > 0 && can('billing.view')) { %>
+  <div class="notice notice--warn" style="margin-bottom:1.1rem">
+    <strong><%= hotel.currency_symbol %> <%= fmt(data.unbilled_room_food_minor) %></strong> of food is charged to rooms and not yet billed.
+    It will be added to each guest's bill at check-out.
+  </div>
+<% } %>
+
+<div class="grid grid--2">
+  <div class="card">
+    <div class="card__head">
+      <h2>Arriving today</h2>
+      <div class="spacer"></div>
+      <span class="badge"><%= arrivals.length %></span>
+    </div>
+    <div class="card__body card__body--flush table-wrap">
+      <% if (!arrivals.length) { %>
+        <div class="table-empty">No arrivals booked for today.</div>
+      <% } else { %>
+        <table class="data">
+          <thead><tr><th>Booking</th><th>Guest</th><th>Room</th><th>Nights</th><th></th></tr></thead>
+          <tbody>
+            <% arrivals.forEach(function (b) { %>
+              <tr>
+                <td><a href="/bookings/<%= b.id %>"><%= b.code %></a></td>
+                <td><%= b.guest_name %><br><small class="muted"><%= b.phone %></small></td>
+                <td><%= b.room_numbers || '—' %></td>
+                <td class="num"><%= b.nights %></td>
+                <td class="right">
+                  <% if (b.status === 'checked_in') { %>
+                    <span class="badge badge--ok">Checked in</span>
+                  <% } else if (can('bookings.checkin')) { %>
+                    <form method="post" action="/bookings/<%= b.id %>/check-in" style="display:inline">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <button class="btn btn--sm btn--primary" type="submit">Check in</button>
+                    </form>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__head">
+      <h2>Departing today</h2>
+      <div class="spacer"></div>
+      <span class="badge"><%= departures.length %></span>
+    </div>
+    <div class="card__body card__body--flush table-wrap">
+      <% if (!departures.length) { %>
+        <div class="table-empty">No departures due today.</div>
+      <% } else { %>
+        <table class="data">
+          <thead><tr><th>Booking</th><th>Guest</th><th>Room</th><th></th></tr></thead>
+          <tbody>
+            <% departures.forEach(function (b) { %>
+              <tr>
+                <td><a href="/bookings/<%= b.id %>"><%= b.code %></a></td>
+                <td><%= b.guest_name %></td>
+                <td><%= b.room_numbers || '—' %></td>
+                <td class="right">
+                  <% if (b.status === 'checked_out') { %>
+                    <span class="badge">Checked out</span>
+                  <% } else if (can('bookings.checkout')) { %>
+                    <a class="btn btn--sm btn--primary" href="/bookings/<%= b.id %>/check-out">Check out</a>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card__head">
+    <h2>Rooms right now</h2>
+    <div class="spacer"></div>
+    <div class="legend">
+      <span><i class="dot dot--available"></i> Available <%= counts.available %></span>
+      <span><i class="dot dot--occupied"></i> Occupied <%= counts.occupied %></span>
+      <span><i class="dot dot--reserved"></i> Reserved <%= counts.reserved %></span>
+      <span><i class="dot dot--maintenance"></i> Maintenance <%= counts.maintenance %></span>
+    </div>
+  </div>
+  <div class="card__body">
+    <% if (!board.length) { %>
+      <p class="muted mb-0">No rooms have been set up yet.
+        <% if (can('rooms.manage')) { %><a href="/rooms/manage">Add your rooms</a>.<% } %></p>
+    <% } else { %>
+      <div class="room-grid">
+        <% board.forEach(function (room) { %>
+          <a class="room room--<%= room.status %>"
+             href="<%= room.occupancy ? '/bookings/' + room.occupancy.booking_id : (can('bookings.create') && room.status === 'available' ? '/bookings/new?room_id=' + room.id : '/rooms') %>">
+            <div class="room__no"><%= room.number %></div>
+            <div class="room__type"><%= room.type_name %></div>
+            <% if (room.occupancy) { %>
+              <div class="room__guest"><%= room.occupancy.guest_name %></div>
+              <div class="room__until">until <%= fmtDate(room.occupancy.departure_date) %></div>
+            <% } else if (room.status === 'maintenance') { %>
+              <div class="room__guest">Maintenance</div>
+            <% } else { %>
+              <div class="room__until"><%= hotel.currency_symbol %> <%= fmt(room.base_rate) %>/night</div>
+            <% } %>
+          </a>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<% if (kitchen.length) { %>
+  <div class="card">
+    <div class="card__head">
+      <h2>Open kitchen orders</h2>
+      <div class="spacer"></div>
+      <a class="btn btn--sm" href="/orders/kitchen">Kitchen queue</a>
+    </div>
+    <div class="card__body card__body--flush table-wrap">
+      <table class="data">
+        <thead><tr><th>Order</th><th>Where</th><th>Meal</th><th>Billing</th><th class="num">Items</th><th class="num">Amount</th></tr></thead>
+        <tbody>
+          <% kitchen.forEach(function (o) { %>
+            <tr>
+              <td><a href="/orders/<%= o.id %>"><%= o.code %></a></td>
+              <td><%= o.order_type === 'room_service' ? 'Room ' + (o.room_number || '—') : 'Table ' + (o.table_no || '—') %></td>
+              <td><%= domain.MEAL_LABELS[o.meal_type] %></td>
+              <td><span class="badge badge--<%= o.billing_mode === 'add_to_room' ? 'info' : (o.billing_mode === 'complimentary' ? 'brand' : 'ok') %>"><%= domain.BILLING_MODE_LABELS[o.billing_mode] %></span></td>
+              <td class="num"><%= o.item_count %></td>
+              <td class="num"><%= fmt(o.total_minor) %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% } %>
+
+<%- include('../partials/foot') %>

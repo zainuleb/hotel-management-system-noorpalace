@@ -1,0 +1,227 @@
+<%- include('../partials/head', { heading: mode === 'edit' ? 'Edit ' + booking.code : 'New Booking', narrow: true }) %>
+
+<form method="post" action="<%= mode === 'edit' ? '/bookings/' + booking.id + '/edit' : '/bookings' %>" id="booking-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <% if (guest) { %><input type="hidden" name="guest_id" value="<%= guest.id %>"><% } %>
+
+  <div class="card">
+    <div class="card__head"><h2>Stay</h2></div>
+    <div class="card__body">
+      <div class="form-grid form-grid--2">
+        <div class="field">
+          <label for="arrival_date">Arrival</label>
+          <input id="arrival_date" name="arrival_date" type="date" value="<%= form.arrival_date %>" data-range-start required>
+        </div>
+        <div class="field">
+          <label for="departure_date">Departure</label>
+          <input id="departure_date" name="departure_date" type="date" value="<%= form.departure_date %>"
+                 min="<%= form.arrival_date %>" data-range-end required>
+        </div>
+        <div class="field">
+          <label for="room_id">Room</label>
+          <select id="room_id" name="room_id" required>
+            <option value="">— choose a room —</option>
+            <% rooms.forEach(function (r) { %>
+              <option value="<%= r.id %>" data-rate="<%= (r.base_rate / 100).toFixed(2) %>"
+                <%= Number(form.room_id) === r.id ? 'selected' : '' %>>
+                <%= r.number %> · <%= r.type_name %> · <%= hotel.currency_symbol %> <%= fmt(r.base_rate) %>
+              </option>
+            <% }) %>
+          </select>
+          <small id="room-hint" class="muted">Only rooms free for the whole stay are listed.</small>
+        </div>
+        <div class="field">
+          <label for="rate_minor">Rate per night</label>
+          <input id="rate_minor" name="rate_minor" type="number" step="0.01" min="0"
+                 value="<%= segment ? (segment.rate_minor / 100).toFixed(2) : '' %>" placeholder="Room's standard rate">
+          <small>Leave blank to use the room type's rate.</small>
+        </div>
+        <div class="field">
+          <label for="package">Booking type</label>
+          <select id="package" name="package">
+            <% Object.keys(domain.PACKAGE_LABELS).forEach(function (key) { %>
+              <option value="<%= key %>" <%= form.package === key ? 'selected' : '' %>><%= domain.PACKAGE_LABELS[key] %></option>
+            <% }) %>
+          </select>
+          <small>"Room + Meals" makes breakfast complimentary for this guest.</small>
+        </div>
+        <div class="field">
+          <label for="discount_minor">Discount on the bill</label>
+          <input id="discount_minor" name="discount_minor" type="number" step="0.01" min="0"
+                 value="<%= booking ? (booking.discount_minor / 100).toFixed(2) : '0.00' %>">
+        </div>
+        <div class="field">
+          <label for="adults">Adults</label>
+          <input id="adults" name="adults" type="number" min="1" value="<%= form.adults %>">
+        </div>
+        <div class="field">
+          <label for="children">Children</label>
+          <input id="children" name="children" type="number" min="0" value="<%= form.children %>">
+        </div>
+      </div>
+      <div class="notice" id="stay-summary"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__head"><h2>Guest</h2></div>
+    <div class="card__body">
+      <div class="form-grid form-grid--2">
+        <div class="field span-2">
+          <label for="full_name">Full name</label>
+          <input id="full_name" name="full_name" value="<%= guest ? guest.full_name : '' %>" autocomplete="off" required>
+          <div id="guest-matches"></div>
+          <small>Start typing — if this guest has stayed before, pick them to reuse their record.</small>
+        </div>
+        <div class="field">
+          <label for="id_number">CNIC / Passport</label>
+          <input id="id_number" name="id_number" value="<%= guest ? guest.id_number : '' %>">
+        </div>
+        <div class="field">
+          <label for="phone">Phone</label>
+          <input id="phone" name="phone" type="tel" value="<%= guest ? guest.phone : '' %>">
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" value="<%= guest ? guest.email : '' %>">
+        </div>
+        <div class="field">
+          <label for="nationality">Nationality</label>
+          <input id="nationality" name="nationality" value="<%= guest ? guest.nationality : '' %>">
+        </div>
+        <div class="field span-2">
+          <label for="address">Address</label>
+          <input id="address" name="address" value="<%= guest ? guest.address : '' %>">
+        </div>
+        <div class="field span-2">
+          <label for="notes">Notes</label>
+          <textarea id="notes" name="notes"><%= booking ? booking.notes : '' %></textarea>
+        </div>
+      </div>
+
+      <% if (mode === 'create') { %>
+        <label class="check">
+          <input type="checkbox" name="check_in_now" value="1">
+          <span>
+            <strong>Walk-in — check this guest in right now</strong>
+            <small class="muted">Use this when the guest is standing at the desk. Leave it unticked for an advance reservation.</small>
+          </span>
+        </label>
+      <% } %>
+    </div>
+    <div class="card__foot btn-row">
+      <button class="btn btn--primary btn--lg" type="submit"><%= mode === 'edit' ? 'Save changes' : 'Create booking' %></button>
+      <a class="btn" href="<%= mode === 'edit' ? '/bookings/' + booking.id : '/bookings' %>">Cancel</a>
+    </div>
+  </div>
+</form>
+
+<script>
+  (function () {
+    var arrival = document.getElementById('arrival_date');
+    var departure = document.getElementById('departure_date');
+    var roomSelect = document.getElementById('room_id');
+    var rate = document.getElementById('rate_minor');
+    var summary = document.getElementById('stay-summary');
+    var symbol = <%- JSON.stringify(hotel.currency_symbol) %>;
+    var excludeId = <%= booking ? booking.id : 'null' %>;
+
+    function nights() {
+      if (!arrival.value || !departure.value) return 0;
+      var a = new Date(arrival.value + 'T00:00:00');
+      var b = new Date(departure.value + 'T00:00:00');
+      return Math.max(0, Math.round((b - a) / 86400000));
+    }
+
+    function selectedRate() {
+      if (rate.value) return parseFloat(rate.value) || 0;
+      var opt = roomSelect.selectedOptions[0];
+      return opt && opt.dataset.rate ? parseFloat(opt.dataset.rate) : 0;
+    }
+
+    function renderSummary() {
+      var n = Math.max(1, nights());
+      var total = n * selectedRate();
+      summary.textContent = n + ' night(s) × ' + symbol + ' ' + selectedRate().toFixed(2) +
+        ' = ' + symbol + ' ' + total.toFixed(2) + ' in room charges. Food is added separately.';
+    }
+
+    /* Reload the free-room list whenever the dates change, keeping the choice
+       if that room is still free. */
+    function refreshRooms() {
+      if (!arrival.value || !departure.value || departure.value <= arrival.value) return;
+      var url = '/bookings/rooms.json?from=' + arrival.value + '&to=' + departure.value +
+        (excludeId ? '&exclude=' + excludeId : '');
+      fetch(url, { headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (rooms) {
+          var previous = roomSelect.value;
+          roomSelect.innerHTML = '<option value="">— choose a room —</option>';
+          rooms.forEach(function (r) {
+            var opt = document.createElement('option');
+            opt.value = r.id;
+            opt.dataset.rate = (r.base_rate / 100).toFixed(2);
+            opt.textContent = r.number + ' · ' + r.type_name + ' · ' + symbol + ' ' + (r.base_rate / 100).toFixed(2);
+            if (String(r.id) === previous) opt.selected = true;
+            roomSelect.appendChild(opt);
+          });
+          document.getElementById('room-hint').textContent =
+            rooms.length + ' room(s) free for these dates.';
+          renderSummary();
+        })
+        .catch(function () { /* keep whatever is already in the list */ });
+    }
+
+    [arrival, departure].forEach(function (el) { el.addEventListener('change', refreshRooms); });
+    [roomSelect, rate].forEach(function (el) { el.addEventListener('change', renderSummary); });
+    rate.addEventListener('input', renderSummary);
+    renderSummary();
+
+    /* Guest lookup */
+    var nameInput = document.getElementById('full_name');
+    var matches = document.getElementById('guest-matches');
+    var timer;
+    nameInput.addEventListener('input', function () {
+      clearTimeout(timer);
+      var term = nameInput.value.trim();
+      if (term.length < 2) { matches.innerHTML = ''; return; }
+      timer = setTimeout(function () {
+        fetch('/guests/search.json?q=' + encodeURIComponent(term))
+          .then(function (r) { return r.json(); })
+          .then(function (list) {
+            if (!list.length) { matches.innerHTML = ''; return; }
+            matches.innerHTML = '<div class="notice" style="margin-top:.4rem">Existing guests: ' +
+              list.map(function (g) {
+                return '<button type="button" class="btn btn--sm" data-guest=\'' +
+                  JSON.stringify(g).replace(/'/g, '&#39;') + '\'>' +
+                  g.full_name + (g.phone ? ' · ' + g.phone : '') + '</button>';
+              }).join(' ') + '</div>';
+          })
+          .catch(function () { matches.innerHTML = ''; });
+      }, 250);
+    });
+
+    matches.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-guest]');
+      if (!btn) return;
+      var g = JSON.parse(btn.getAttribute('data-guest'));
+      nameInput.value = g.full_name;
+      document.getElementById('id_number').value = g.id_number || '';
+      document.getElementById('phone').value = g.phone || '';
+      document.getElementById('email').value = g.email || '';
+      document.getElementById('address').value = g.address || '';
+      document.getElementById('nationality').value = g.nationality || '';
+      var hidden = document.querySelector('input[name=guest_id]');
+      if (!hidden) {
+        hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = 'guest_id';
+        document.getElementById('booking-form').appendChild(hidden);
+      }
+      hidden.value = g.id;
+      matches.innerHTML = '<small class="muted">Using the saved record for ' + g.full_name + '.</small>';
+    });
+  })();
+</script>
+
+<%- include('../partials/foot') %>

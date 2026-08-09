@@ -1,0 +1,232 @@
+<%- include('../partials/head', { heading: 'Reports' }) %>
+
+<div class="card">
+  <div class="card__body">
+    <form class="filters" method="get" action="/reports/sales">
+      <div class="btn-row">
+        <% [['today','Today'],['yesterday','Yesterday'],['week','Last 7 days'],['month','This month'],['last30','Last 30 days']].forEach(function (p) { %>
+          <a class="btn btn--sm <%= preset === p[0] ? 'btn--primary' : '' %>" href="/reports/sales?preset=<%= p[0] %>"><%= p[1] %></a>
+        <% }) %>
+      </div>
+      <div class="field"><label for="from">From</label><input id="from" name="from" type="date" value="<%= from %>"></div>
+      <div class="field"><label for="to">To</label><input id="to" name="to" type="date" value="<%= to %>"></div>
+      <input type="hidden" name="preset" value="custom">
+      <button class="btn btn--primary" type="submit">Apply</button>
+    </form>
+  </div>
+</div>
+
+<div class="grid grid--4" style="margin-bottom:1.1rem">
+  <div class="stat stat--brand">
+    <div class="stat__label">Total billed</div>
+    <div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(summary.billed_minor) %></div>
+    <div class="stat__meta"><%= summary.invoice_count %> invoice(s)</div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Room revenue</div>
+    <div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(summary.room_minor) %></div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Food revenue</div>
+    <div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(summary.food_minor) %></div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Cash collected</div>
+    <div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(summary.collected_minor) %></div>
+    <div class="stat__meta">Payments taken in this period</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card__head">
+    <h2>Revenue by day — room vs food</h2>
+    <div class="spacer"></div>
+    <a class="btn btn--sm" href="/reports/export.csv?report=daily&preset=custom&from=<%= from %>&to=<%= to %>">Export CSV</a>
+  </div>
+  <div class="card__body card__body--flush table-wrap">
+    <% if (!daily.length) { %>
+      <div class="table-empty">No invoices were raised in this period.</div>
+    <% } else { %>
+      <% var peak = Math.max.apply(null, daily.map(function (d) { return d.total_minor; }).concat([1])); %>
+      <table class="data">
+        <thead><tr><th>Date</th><th class="num">Room</th><th class="num">Food</th><th class="num">Total</th><th style="width:34%">Share</th></tr></thead>
+        <tbody>
+          <% daily.forEach(function (d) { %>
+            <tr>
+              <td><%= fmtDate(d.day) %></td>
+              <td class="num"><%= fmt(d.room_minor) %></td>
+              <td class="num"><%= fmt(d.food_minor) %></td>
+              <td class="num"><strong><%= fmt(d.total_minor) %></strong></td>
+              <td><div class="bar"><span style="width:<%= Math.round((d.total_minor / peak) * 100) %>%"></span></div></td>
+            </tr>
+          <% }) %>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>Total</td>
+            <td class="num"><%= fmt(summary.room_minor) %></td>
+            <td class="num"><%= fmt(summary.food_minor) %></td>
+            <td class="num"><%= fmt(summary.billed_minor) %></td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    <% } %>
+  </div>
+</div>
+
+<div class="grid grid--2">
+  <div class="card">
+    <div class="card__head">
+      <h2>Meal-wise sales</h2>
+      <div class="spacer"></div>
+      <a class="btn btn--sm" href="/reports/export.csv?report=meals&preset=custom&from=<%= from %>&to=<%= to %>">CSV</a>
+    </div>
+    <div class="card__body card__body--flush table-wrap">
+      <% if (!meals.length) { %>
+        <div class="table-empty">No food orders in this period.</div>
+      <% } else { %>
+        <table class="data">
+          <thead><tr><th>Meal</th><th class="num">Orders</th><th class="num">Items</th><th class="num">Gross</th><th class="num">Net</th></tr></thead>
+          <tbody>
+            <% meals.forEach(function (m) { %>
+              <tr>
+                <td><strong><%= domain.MEAL_LABELS[m.meal_type] || m.meal_type %></strong></td>
+                <td class="num"><%= m.orders %></td>
+                <td class="num"><%= m.items %></td>
+                <td class="num"><%= fmt(m.gross_minor) %></td>
+                <td class="num"><%= fmt(m.net_minor) %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__head">
+      <h2>Food billing split</h2>
+      <div class="spacer"></div>
+      <a class="btn btn--sm" href="/reports/export.csv?report=billing&preset=custom&from=<%= from %>&to=<%= to %>">CSV</a>
+    </div>
+    <div class="card__body card__body--flush table-wrap">
+      <% if (!billingSplit.length) { %>
+        <div class="table-empty">No food orders in this period.</div>
+      <% } else { %>
+        <table class="data">
+          <thead><tr><th>Billed as</th><th class="num">Orders</th><th class="num">Gross</th><th class="num">Net</th></tr></thead>
+          <tbody>
+            <% billingSplit.forEach(function (b) { %>
+              <tr>
+                <td><span class="badge badge--<%= b.billing_mode === 'add_to_room' ? 'info' : (b.billing_mode === 'complimentary' ? 'brand' : 'ok') %>"><%= domain.BILLING_MODE_LABELS[b.billing_mode] || b.billing_mode %></span></td>
+                <td class="num"><%= b.orders %></td>
+                <td class="num"><%= fmt(b.gross_minor) %></td>
+                <td class="num"><%= fmt(b.net_minor) %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+        <div class="card__foot">
+          <small class="muted">"Add to Room" lands on guest invoices at check-out. "Cash Now" should already be in the drawer. Use this to reconcile the two.</small>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__head"><h2>Payments by mode</h2></div>
+    <div class="card__body card__body--flush table-wrap">
+      <% if (!modes.length) { %>
+        <div class="table-empty">No payments received in this period.</div>
+      <% } else { %>
+        <table class="data">
+          <thead><tr><th>Mode</th><th class="num">Count</th><th class="num">Amount</th></tr></thead>
+          <tbody>
+            <% modes.forEach(function (m) { %>
+              <tr>
+                <td><%= domain.PAYMENT_MODE_LABELS[m.mode] || m.mode %></td>
+                <td class="num"><%= m.count %></td>
+                <td class="num"><%= fmt(m.amount_minor) %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+          <tfoot><tr><td>Total collected</td><td></td><td class="num"><%= fmt(summary.collected_minor) %></td></tr></tfoot>
+        </table>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__head"><h2>Best sellers</h2></div>
+    <div class="card__body card__body--flush table-wrap">
+      <% if (!topItems.length) { %>
+        <div class="table-empty">Nothing sold in this period.</div>
+      <% } else { %>
+        <table class="data">
+          <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Value</th></tr></thead>
+          <tbody>
+            <% topItems.forEach(function (t) { %>
+              <tr><td><%= t.name_snapshot %></td><td class="num"><%= t.qty %></td><td class="num"><%= fmt(t.amount_minor) %></td></tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card__head">
+    <h2>Occupancy</h2>
+    <div class="spacer"></div>
+    <a class="btn btn--sm" href="/reports/export.csv?report=occupancy&preset=custom&from=<%= from %>&to=<%= to %>">Export CSV</a>
+  </div>
+  <div class="card__body card__body--flush table-wrap">
+    <table class="data">
+      <thead><tr><th>Date</th><th class="num">Rooms</th><th class="num">Occupied</th><th class="num">Reserved</th><th class="num">Free</th><th style="width:30%">Occupancy</th></tr></thead>
+      <tbody>
+        <% occupancy.forEach(function (o) { %>
+          <tr>
+            <td><%= fmtDate(o.day) %></td>
+            <td class="num"><%= o.total %></td>
+            <td class="num"><%= o.occupied %></td>
+            <td class="num"><%= o.reserved %></td>
+            <td class="num"><%= o.free %></td>
+            <td><div class="bar"><span style="width:<%= o.percent %>%"></span></div><small class="muted"><%= o.percent %>%</small></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card__head">
+    <h2>Outstanding bills</h2>
+    <div class="spacer"></div>
+    <a class="btn btn--sm" href="/billing/outstanding">Open full list</a>
+  </div>
+  <div class="card__body card__body--flush table-wrap">
+    <% if (!outstanding.length) { %>
+      <div class="table-empty">Nothing outstanding.</div>
+    <% } else { %>
+      <table class="data">
+        <thead><tr><th>Invoice</th><th>Guest</th><th>Raised</th><th class="num">Total</th><th class="num">Balance</th></tr></thead>
+        <tbody>
+          <% outstanding.slice(0, 15).forEach(function (i) { %>
+            <tr>
+              <td><a href="/invoices/<%= i.id %>"><%= i.number %></a></td>
+              <td><%= i.guest_name || '—' %></td>
+              <td><small><%= fmtDate(i.created_at) %></small></td>
+              <td class="num"><%= fmt(i.total_minor) %></td>
+              <td class="num"><strong><%= fmt(i.balance_minor) %></strong></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

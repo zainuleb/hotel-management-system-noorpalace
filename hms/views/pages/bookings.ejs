@@ -1,0 +1,63 @@
+<%- include('../partials/head', { heading: 'Bookings' }) %>
+
+<div class="card">
+  <div class="card__body">
+    <form class="filters" method="get" action="/bookings">
+      <div class="field field--grow">
+        <label for="q">Search</label>
+        <input id="q" name="q" type="search" value="<%= q %>" placeholder="Booking code, guest name, phone or CNIC">
+      </div>
+      <div class="field">
+        <label for="status">Status</label>
+        <select id="status" name="status" data-auto-submit>
+          <% [['active','Active (reserved + in house)'],['reserved','Reserved'],['checked_in','Checked in'],['checked_out','Checked out'],['cancelled','Cancelled'],['all','All']].forEach(function (opt) { %>
+            <option value="<%= opt[0] %>" <%= status === opt[0] ? 'selected' : '' %>><%= opt[1] %></option>
+          <% }) %>
+        </select>
+      </div>
+      <button class="btn btn--primary" type="submit">Search</button>
+      <% if (can('bookings.create')) { %>
+        <a class="btn" href="/bookings/new">＋ New booking</a>
+      <% } %>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card__head"><h2><%= bookings.length %> booking(s)</h2></div>
+  <div class="card__body card__body--flush table-wrap">
+    <% if (!bookings.length) { %>
+      <div class="table-empty">Nothing matches that search.</div>
+    <% } else { %>
+      <table class="data">
+        <thead>
+          <tr><th>Code</th><th>Guest</th><th>Room</th><th>Stay</th><th class="num">Nights</th><th>Type</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <% bookings.forEach(function (b) { %>
+            <tr>
+              <td><a href="/bookings/<%= b.id %>"><strong><%= b.code %></strong></a></td>
+              <td><%= b.guest_name %><% if (b.guest_phone) { %><br><small class="muted"><%= b.guest_phone %></small><% } %></td>
+              <td><%= b.room_numbers || '—' %></td>
+              <td class="nowrap"><%= fmtDate(b.arrival_date) %> <span class="muted">→</span> <%= fmtDate(b.departure_date) %></td>
+              <td class="num"><%= b.nights %></td>
+              <td><small><%= domain.PACKAGE_LABELS[b.package] %></small></td>
+              <td>
+                <%
+                  var cls = 'badge';
+                  if (b.status === 'checked_in') cls = 'badge badge--ok';
+                  else if (b.status === 'reserved') cls = 'badge badge--warn';
+                  else if (b.status === 'cancelled') cls = 'badge badge--bad';
+                  else if (b.status === 'checked_out') cls = 'badge badge--info';
+                %>
+                <span class="<%= cls %>"><%= domain.BOOKING_STATUS_LABELS[b.status] %></span>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

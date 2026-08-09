@@ -1,0 +1,49 @@
+<%- include('../partials/head', { heading: 'Room Status' }) %>
+
+<div class="card">
+  <div class="card__head">
+    <form class="filters" method="get" action="/rooms">
+      <a class="btn btn--sm" href="/rooms?date=<%= prevDate %>">‹ Prev</a>
+      <div class="field">
+        <label for="date">Showing</label>
+        <input id="date" name="date" type="date" value="<%= date %>" data-auto-submit>
+      </div>
+      <a class="btn btn--sm" href="/rooms?date=<%= nextDate %>">Next ›</a>
+      <a class="btn btn--sm" href="/rooms">Today</a>
+    </form>
+    <div class="spacer"></div>
+    <div class="legend">
+      <span><i class="dot dot--available"></i> Available <%= counts.available %></span>
+      <span><i class="dot dot--occupied"></i> Occupied <%= counts.occupied %></span>
+      <span><i class="dot dot--reserved"></i> Reserved <%= counts.reserved %></span>
+      <span><i class="dot dot--maintenance"></i> Maintenance <%= counts.maintenance %></span>
+    </div>
+  </div>
+  <div class="card__body">
+    <% if (!board.length) { %>
+      <div class="table-empty">No rooms yet.
+        <% if (can('rooms.manage')) { %><a href="/rooms/manage">Set up your rooms</a>.<% } %></div>
+    <% } else { %>
+      <div class="room-grid">
+        <% board.forEach(function (room) { %>
+          <a class="room room--<%= room.status %>"
+             href="<%= room.occupancy ? '/bookings/' + room.occupancy.booking_id : (can('bookings.create') && room.status === 'available' ? '/bookings/new?room_id=' + room.id + '&arrival_date=' + date : '/rooms/manage') %>">
+            <div class="room__no"><%= room.number %><% if (!room.is_active) { %> <small class="muted">(inactive)</small><% } %></div>
+            <div class="room__type"><%= room.type_name %><%= room.floor ? ' · Floor ' + room.floor : '' %></div>
+            <% if (room.occupancy) { %>
+              <div class="room__guest"><%= room.occupancy.guest_name %></div>
+              <div class="room__until"><%= room.occupancy.code %> · until <%= fmtDate(room.occupancy.departure_date) %></div>
+            <% } else if (room.status === 'maintenance') { %>
+              <div class="room__guest">Under maintenance</div>
+              <div class="room__until"><%= room.maintenance_note || 'No note' %></div>
+            <% } else { %>
+              <div class="room__until"><%= hotel.currency_symbol %> <%= fmt(room.base_rate) %>/night</div>
+            <% } %>
+          </a>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Receipt <%= invoice.number %></title>
+<style>
+  /* Thermal receipt. The width comes from Settings, so one install can drive
+     an 80mm or a 58mm printer without a code change. */
+  :root { --w: <%= settings.thermal_width_mm %>mm; }
+  @page { size: var(--w) auto; margin: 0; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0 auto; padding: 4mm 3mm; width: var(--w);
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: <%= settings.thermal_width_mm === '58' ? '10px' : '11.5px' %>;
+    line-height: 1.35; color: #000; background: #fff;
+  }
+  .center { text-align: center; }
+  .right  { text-align: right; }
+  .bold   { font-weight: 700; }
+  .lg     { font-size: 1.25em; font-weight: 700; }
+  hr { border: 0; border-top: 1px dashed #000; margin: 2mm 0; }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: .3mm 0; vertical-align: top; }
+  td.n { text-align: right; white-space: nowrap; padding-left: 2mm; }
+  .row { display: flex; justify-content: space-between; gap: 2mm; }
+  .section { font-weight: 700; text-transform: uppercase; margin-top: 1.5mm; }
+  .toolbar { padding: 8px; text-align: center; background: #eee; font-family: sans-serif; }
+  .toolbar button, .toolbar a {
+    font: inherit; padding: 6px 14px; margin: 0 4px; border: 1px solid #bbb;
+    background: #fff; border-radius: 4px; cursor: pointer; text-decoration: none; color: #222;
+  }
+  @media print { .toolbar { display: none; } }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <button type="button" onclick="window.print()">Print</button>
+  <a href="/invoices/<%= invoice.id %>">Back to invoice</a>
+</div>
+
+<div class="center">
+  <div class="lg"><%= settings.hotel_name %></div>
+  <% if (settings.hotel_address) { %><div><%= settings.hotel_address %></div><% } %>
+  <% if (settings.hotel_phone) { %><div>Tel: <%= settings.hotel_phone %></div><% } %>
+</div>
+
+<hr>
+
+<div class="row"><span class="bold"><%= invoice.kind === 'stay' ? 'GUEST BILL' : 'SALE RECEIPT' %></span><span><%= invoice.number %></span></div>
+<div class="row"><span>Date</span><span><%= fmtDateTime(invoice.created_at) %></span></div>
+<% if (invoice.guest_name) { %><div class="row"><span>Guest</span><span><%= invoice.guest_name %></span></div><% } %>
+<% if (booking) { %>
+  <div class="row"><span>Booking</span><span><%= booking.code %></span></div>
+  <div class="row"><span>Stay</span><span><%= fmtDate(booking.arrival_date) %> → <%= fmtDate(booking.departure_date) %></span></div>
+<% } %>
+
+<hr>
+
+<% groups.forEach(function (g) { %>
+  <div class="section"><%= g.label %></div>
+  <table>
+    <% g.lines.forEach(function (l) { %>
+      <tr>
+        <td><%= l.description %><% if (l.qty && l.qty !== 1) { %><br><small><%= l.qty %> × <%= fmt(l.unit_minor) %></small><% } %></td>
+        <td class="n"><%= fmt(l.amount_minor) %></td>
+      </tr>
+    <% }) %>
+  </table>
+<% }) %>
+
+<hr>
+
+<table>
+  <% if (invoice.room_charges_minor) { %>
+    <tr><td>Room charges</td><td class="n"><%= fmt(invoice.room_charges_minor) %></td></tr>
+  <% } %>
+  <% if (invoice.food_charges_minor) { %>
+    <tr><td>Food charges</td><td class="n"><%= fmt(invoice.food_charges_minor) %></td></tr>
+  <% } %>
+  <% if (invoice.discount_minor) { %>
+    <tr><td>Discount</td><td class="n">- <%= fmt(invoice.discount_minor) %></td></tr>
+  <% } %>
+  <% if (invoice.tax_minor) { %>
+    <tr><td><%= settings.tax_label %> <%= invoice.tax_percent %>%</td><td class="n"><%= fmt(invoice.tax_minor) %></td></tr>
+  <% } %>
+  <tr><td class="bold lg">TOTAL</td><td class="n bold lg"><%= settings.currency_symbol %> <%= fmt(invoice.total_minor) %></td></tr>
+</table>
+
+<% if (payments.length) { %>
+  <hr>
+  <table>
+    <% payments.forEach(function (p) { %>
+      <tr><td>Paid · <%= domain.PAYMENT_MODE_LABELS[p.mode] %></td><td class="n"><%= fmt(p.amount_minor) %></td></tr>
+    <% }) %>
+    <% if (balance > 0) { %>
+      <tr><td class="bold">BALANCE DUE</td><td class="n bold"><%= fmt(balance) %></td></tr>
+    <% } %>
+  </table>
+<% } %>
+
+<hr>
+
+<div class="center">
+  <% if (settings.receipt_footer) { %><div><%= settings.receipt_footer %></div><% } %>
+  <div><small>Served by <%= currentUser.full_name %></small></div>
+  <div><small><%= invoice.number %> · printed <%= fmtDateTime(nowStamp) %></small></div>
+</div>
+
+<% if (autoPrint) { %>
+  <script>window.addEventListener('load', function () { setTimeout(function () { window.print(); }, 250); });</script>
+<% } %>
+</body>
+</html>
