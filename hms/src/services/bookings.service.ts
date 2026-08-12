@@ -351,7 +351,7 @@ export function checkIn(id: number, req: Request): void {
     nowTs(),
     id,
   );
-  logActivity(req, 'checked in', 'booking', id, `${booking.code} · Room ${segment?.room_number ?? '—'}`);
+  logActivity(req, 'checked in', 'booking', id, `${booking.code} · Room ${segment?.room_number ?? '-'}`);
 }
 
 /** Moves a checked-in guest to a different room from `fromDate` onwards. */
@@ -378,7 +378,7 @@ export function changeRoom(id: number, newRoomId: number, fromDate: string, rate
     const clash = roomConflict(newRoomId, fromDate, booking.departure_date, id);
     if (clash) {
       throw new ValidationError(
-        `Room ${room.number} is not free — held by ${clash.code} (${clash.guest_name}) until ${clash.to_date}.`,
+        `Room ${room.number} is not free, held by ${clash.code} (${clash.guest_name}) until ${clash.to_date}.`,
       );
     }
     if (fromDate === segment.from_date) {

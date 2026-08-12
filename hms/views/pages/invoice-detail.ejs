@@ -37,7 +37,7 @@
       <div class="totals mt-1">
         <div><span>Room charges</span><span><%= fmt(invoice.room_charges_minor) %></span></div>
         <div><span>Food charges</span><span><%= fmt(invoice.food_charges_minor) %></span></div>
-        <% if (invoice.discount_minor) { %><div><span>Discount</span><span>− <%= fmt(invoice.discount_minor) %></span></div><% } %>
+        <% if (invoice.discount_minor) { %><div><span>Discount</span><span>- <%= fmt(invoice.discount_minor) %></span></div><% } %>
         <% if (invoice.tax_minor) { %><div><span><%= hotel.tax_label %> (<%= invoice.tax_percent %>%)</span><span><%= fmt(invoice.tax_minor) %></span></div><% } %>
         <div class="grand"><span>Total</span><span><%= hotel.currency_symbol %> <%= fmt(invoice.total_minor) %></span></div>
         <div><span>Paid</span><span><%= fmt(paid) %></span></div>
@@ -63,8 +63,8 @@
                 <tr>
                   <td><small><%= fmtDateTime(p.created_at) %></small></td>
                   <td><%= domain.PAYMENT_MODE_LABELS[p.mode] %></td>
-                  <td class="muted"><%= p.reference || '—' %></td>
-                  <td><small><%= p.received_by_name || '—' %></small></td>
+                  <td class="muted"><%= p.reference || '-' %></td>
+                  <td><small><%= p.received_by_name || '-' %></small></td>
                   <td class="num"><%= fmt(p.amount_minor) %></td>
                 </tr>
               <% }) %>
@@ -107,7 +107,7 @@
       <div class="card__body">
         <ul class="timeline">
           <% history.forEach(function (h) { %>
-            <li><time><%= fmtDateTime(h.created_at) %> · <%= h.username %></time><%= h.action %><%= h.detail ? ' — ' + h.detail : '' %></li>
+            <li><time><%= fmtDateTime(h.created_at) %> · <%= h.username %></time><%= h.action %><%= h.detail ? ', ' + h.detail : '' %></li>
           <% }) %>
           <% if (!history.length) { %><li class="muted">Nothing recorded.</li><% } %>
         </ul>

@@ -7,14 +7,14 @@ export interface HotelSettings {
   hotel_email: string;
   currency_symbol: string;
   currency_code: string;
-  /** Applied to (room + food − discount) on every invoice. */
+  /** Applied to (room + food - discount) on every invoice. */
   tax_percent: string;
   tax_label: string;
   invoice_prefix: string;
   booking_prefix: string;
   order_prefix: string;
   receipt_footer: string;
-  /** 58 or 80 — controls the width of the thermal receipt stylesheet. */
+  /** 58 or 80, controls the width of the thermal receipt stylesheet. */
   thermal_width_mm: string;
   checkin_time: string;
   checkout_time: string;

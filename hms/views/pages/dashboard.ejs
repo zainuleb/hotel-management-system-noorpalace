@@ -77,7 +77,7 @@
               <tr>
                 <td><a href="/bookings/<%= b.id %>"><%= b.code %></a></td>
                 <td><%= b.guest_name %><br><small class="muted"><%= b.phone %></small></td>
-                <td><%= b.room_numbers || '—' %></td>
+                <td><%= b.room_numbers || '-' %></td>
                 <td class="num"><%= b.nights %></td>
                 <td class="right">
                   <% if (b.status === 'checked_in') { %>
@@ -114,7 +114,7 @@
               <tr>
                 <td><a href="/bookings/<%= b.id %>"><%= b.code %></a></td>
                 <td><%= b.guest_name %></td>
-                <td><%= b.room_numbers || '—' %></td>
+                <td><%= b.room_numbers || '-' %></td>
                 <td class="right">
                   <% if (b.status === 'checked_out') { %>
                     <span class="badge">Checked out</span>
@@ -186,7 +186,7 @@
           <% kitchen.forEach(function (o) { %>
             <tr>
               <td><a href="/orders/<%= o.id %>"><%= o.code %></a></td>
-              <td><%= o.order_type === 'room_service' ? 'Room ' + (o.room_number || '—') : 'Table ' + (o.table_no || '—') %></td>
+              <td><%= o.order_type === 'room_service' ? 'Room ' + (o.room_number || '-') : 'Table ' + (o.table_no || '-') %></td>
               <td><%= domain.MEAL_LABELS[o.meal_type] %></td>
               <td><span class="badge badge--<%= o.billing_mode === 'add_to_room' ? 'info' : (o.billing_mode === 'complimentary' ? 'brand' : 'ok') %>"><%= domain.BILLING_MODE_LABELS[o.billing_mode] %></span></td>
               <td class="num"><%= o.item_count %></td>

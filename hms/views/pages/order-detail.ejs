@@ -40,7 +40,7 @@
         <tfoot>
           <tr><td colspan="3">Subtotal</td><td class="num"><%= fmt(order.subtotal_minor) %></td></tr>
           <% if (order.discount_minor) { %>
-            <tr><td colspan="3">Discount</td><td class="num">− <%= fmt(order.discount_minor) %></td></tr>
+            <tr><td colspan="3">Discount</td><td class="num">- <%= fmt(order.discount_minor) %></td></tr>
           <% } %>
           <tr><td colspan="3">Total<% if (order.billing_mode === 'complimentary') { %> <small class="muted">(complimentary)</small><% } %></td>
               <td class="num"><%= hotel.currency_symbol %> <%= fmt(order.total_minor) %></td></tr>
@@ -59,15 +59,15 @@
         <dl class="kv">
           <dt>Type</dt><dd><%= order.order_type === 'room_service' ? 'Room service' : 'Dine-in' %></dd>
           <% if (order.order_type === 'room_service' || order.booking_id) { %>
-            <dt>Room</dt><dd><%= order.room_number || '—' %></dd>
+            <dt>Room</dt><dd><%= order.room_number || '-' %></dd>
             <dt>Guest</dt>
-            <dd><% if (order.booking_id) { %><a href="/bookings/<%= order.booking_id %>"><%= order.guest_full_name %> (<%= order.booking_code %>)</a><% } else { %>—<% } %></dd>
+            <dd><% if (order.booking_id) { %><a href="/bookings/<%= order.booking_id %>"><%= order.guest_full_name %> (<%= order.booking_code %>)</a><% } else { %>-<% } %></dd>
           <% } else { %>
-            <dt>Table</dt><dd><%= order.table_no || '—' %></dd>
+            <dt>Table</dt><dd><%= order.table_no || '-' %></dd>
             <dt>Customer</dt><dd><%= order.guest_name || 'Walk-in' %></dd>
           <% } %>
           <dt>Meal</dt><dd><%= domain.MEAL_LABELS[order.meal_type] %></dd>
-          <dt>Taken by</dt><dd><%= order.created_by_name || '—' %></dd>
+          <dt>Taken by</dt><dd><%= order.created_by_name || '-' %></dd>
           <dt>Placed</dt><dd><%= fmtDateTime(order.created_at) %></dd>
           <dt>KOT printed</dt><dd><%= order.kot_printed_at ? fmtDateTime(order.kot_printed_at) : 'Not yet' %></dd>
         </dl>
@@ -91,7 +91,7 @@
             <div class="field">
               <label for="room_choice">Charge to room (only needed for "Add to Room")</label>
               <select id="room_choice" name="room_choice">
-                <option value="">— keep as is —</option>
+                <option value="">Keep as is</option>
                 <% occupied.forEach(function (r) { %>
                   <option value="<%= r.booking_id %>:<%= r.id %>" <%= order.booking_id === r.booking_id ? 'selected' : '' %>>
                     Room <%= r.number %> · <%= r.guest_name %> (<%= r.code %>)
@@ -99,7 +99,7 @@
                 <% }) %>
               </select>
             </div>
-            <small class="muted">No manager approval needed — switch freely until the order is billed.</small>
+            <small class="muted">No manager approval needed, switch freely until the order is billed.</small>
           </div>
           <div class="card__foot">
             <button class="btn btn--primary" type="submit">Update billing</button>

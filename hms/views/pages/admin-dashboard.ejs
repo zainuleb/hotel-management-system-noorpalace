@@ -5,7 +5,7 @@
     if (pct === null || pct === undefined) return '';
     if (pct > 0) return '▲ ' + pct + '%';
     if (pct < 0) return '▼ ' + Math.abs(pct) + '%';
-    return '— level';
+    return 'level';
   }
   // A period with nothing before it has no meaningful percentage; say so rather
   // than printing a stray separator or a misleading arrow.
@@ -174,7 +174,7 @@
       <table class="data">
         <tbody>
           <tr><td>Received in this period</td><td class="num"><%= fmt(cash.in_minor) %></td></tr>
-          <tr><td>Paid out in this period</td><td class="num">− <%= fmt(cash.out_minor) %></td></tr>
+          <tr><td>Paid out in this period</td><td class="num">- <%= fmt(cash.out_minor) %></td></tr>
           <tr><td><strong>Net movement</strong></td>
               <td class="num" style="color:<%= cash.net_minor >= 0 ? 'var(--ok)' : 'var(--bad)' %>">
                 <strong><%= fmt(cash.net_minor) %></strong></td></tr>
@@ -308,7 +308,7 @@
                 <td class="nowrap"><small><%= fmtDate(e.entry_date) %></small></td>
                 <td><span class="badge badge--<%= e.kind === 'income' ? 'ok' : '' %>"><%= e.category_name %></span></td>
                 <td><%= e.description %></td>
-                <td class="num"><%= e.kind === 'income' ? '+' : '−' %> <%= fmt(e.amount_minor) %></td>
+                <td class="num"><%= e.kind === 'income' ? '+' : '-' %> <%= fmt(e.amount_minor) %></td>
               </tr>
             <% }) %>
           </tbody>
@@ -345,7 +345,7 @@
                   <% } else { %><strong><%= qty(r.on_hand) %></strong> <small class="muted"><%= r.unit %></small><% } %>
                 </td>
                 <td class="num muted"><%= qty(r.reorder_level) %> <%= r.unit %></td>
-                <td class="muted"><%= r.supplier_name || '—' %></td>
+                <td class="muted"><%= r.supplier_name || '-' %></td>
               </tr>
             <% }) %>
           </tbody>
@@ -386,7 +386,7 @@
     <div class="card__body">
       <ul class="timeline">
         <% activity.forEach(function (h) { %>
-          <li><time><%= fmtDateTime(h.created_at) %> · <%= h.username %></time><%= h.action %><%= h.detail ? ' — ' + h.detail : '' %></li>
+          <li><time><%= fmtDateTime(h.created_at) %> · <%= h.username %></time><%= h.action %><%= h.detail ? ', ' + h.detail : '' %></li>
         <% }) %>
         <% if (!activity.length) { %><li class="muted">Nothing yet.</li><% } %>
       </ul>
@@ -396,7 +396,7 @@
 
 <p class="muted"><small>
   Income is counted on the night it was earned, not the day the guest paid, and all figures exclude
-  <%= hotel.tax_label %>. The cash position above is the other view — money that actually moved.
+  <%= hotel.tax_label %>. The cash position above is the other view, money that actually moved.
 </small></p>
 
 <style>

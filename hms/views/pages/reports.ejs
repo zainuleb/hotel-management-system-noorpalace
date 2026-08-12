@@ -39,7 +39,7 @@
 
 <div class="card">
   <div class="card__head">
-    <h2>Revenue by day — room vs food</h2>
+    <h2>Revenue by day: room vs food</h2>
     <div class="spacer"></div>
     <a class="btn btn--sm" href="/reports/export.csv?report=daily&preset=custom&from=<%= from %>&to=<%= to %>">Export CSV</a>
   </div>
@@ -217,7 +217,7 @@
           <% outstanding.slice(0, 15).forEach(function (i) { %>
             <tr>
               <td><a href="/invoices/<%= i.id %>"><%= i.number %></a></td>
-              <td><%= i.guest_name || '—' %></td>
+              <td><%= i.guest_name || '-' %></td>
               <td><small><%= fmtDate(i.created_at) %></small></td>
               <td class="num"><%= fmt(i.total_minor) %></td>
               <td class="num"><strong><%= fmt(i.balance_minor) %></strong></td>

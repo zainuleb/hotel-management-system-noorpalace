@@ -30,7 +30,7 @@
           <% invoices.forEach(function (i) { %>
             <tr>
               <td><a href="/invoices/<%= i.id %>"><strong><%= i.number %></strong></a></td>
-              <td><%= i.guest_name || '—' %></td>
+              <td><%= i.guest_name || '-' %></td>
               <td><% if (i.booking_code) { %><%= i.booking_code %><% } else { %><small class="muted">Walk-in</small><% } %></td>
               <td class="nowrap"><small><%= fmtDate(i.created_at) %></small></td>
               <td class="num"><%= fmt(i.total_minor) %></td>

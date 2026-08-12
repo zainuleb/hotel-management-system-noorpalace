@@ -58,7 +58,7 @@
                   </td>
                   <td class="num"><%= fmt(m.value_minor) %></td>
                   <td>
-                    <small class="muted"><%= m.created_by_name || '—' %></small>
+                    <small class="muted"><%= m.created_by_name || '-' %></small>
                     <% if (m.note) { %><br><small><%= m.note %></small><% } %>
                     <% if (m.supplier_name) { %><br><small class="muted"><%= m.supplier_name %><%= m.reference ? ' · ' + m.reference : '' %></small><% } %>
                     <% if (m.expense_id) { %><br><small class="badge badge--brand">posted to expenses</small><% } %>
@@ -124,7 +124,7 @@
               <div class="field">
                 <label for="m-item">Item</label>
                 <select id="m-item" name="item_id" required>
-                  <option value="">— choose an item —</option>
+                  <option value="">Choose an item…</option>
                   <% items.forEach(function (i) { %>
                     <option value="<%= i.id %>" data-unit="<%= i.unit %>" data-cost="<%= (i.cost_minor / 100).toFixed(2) %>"
                             data-onhand="<%= qty(i.on_hand) %>" <%= preselect.item_id === i.id ? 'selected' : '' %>>
@@ -167,7 +167,7 @@
                 <div class="field">
                   <label for="supplier_id">Supplier</label>
                   <select id="supplier_id" name="supplier_id">
-                    <option value="">— not stated —</option>
+                    <option value="">Not stated</option>
                     <% suppliers.forEach(function (s) { %>
                       <option value="<%= s.id %>"><%= s.name %></option>
                     <% }) %>

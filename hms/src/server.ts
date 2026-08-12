@@ -150,7 +150,7 @@ function main(): void {
   const server = app.listen(config.port, config.host, () => {
     const hotel = getSettings().hotel_name;
     console.log('');
-    console.log(`  ${hotel} — Hotel Management System`);
+    console.log(`  ${hotel}, Hotel Management System`);
     console.log('  ------------------------------------------------');
     console.log(`  On this PC          http://localhost:${config.port}`);
     for (const ip of lanAddresses()) {

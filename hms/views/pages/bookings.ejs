@@ -38,7 +38,7 @@
             <tr>
               <td><a href="/bookings/<%= b.id %>"><strong><%= b.code %></strong></a></td>
               <td><%= b.guest_name %><% if (b.guest_phone) { %><br><small class="muted"><%= b.guest_phone %></small><% } %></td>
-              <td><%= b.room_numbers || '—' %></td>
+              <td><%= b.room_numbers || '-' %></td>
               <td class="nowrap"><%= fmtDate(b.arrival_date) %> <span class="muted">→</span> <%= fmtDate(b.departure_date) %></td>
               <td class="num"><%= b.nights %></td>
               <td><small><%= domain.PACKAGE_LABELS[b.package] %></small></td>

@@ -101,10 +101,10 @@
                   <% if (r.is_low) { %><br><span class="badge badge--warn">low</span><% } %>
                 <% } %>
               </td>
-              <td class="num muted"><%= r.reorder_level ? qty(r.reorder_level) + ' ' + r.unit : '—' %></td>
+              <td class="num muted"><%= r.reorder_level ? qty(r.reorder_level) + ' ' + r.unit : '-' %></td>
               <td class="num"><%= fmt(r.cost_minor) %></td>
               <td class="num"><%= fmt(r.value_minor) %></td>
-              <td class="muted"><%= r.supplier_name || '—' %></td>
+              <td class="muted"><%= r.supplier_name || '-' %></td>
               <td><small class="muted"><%= r.last_movement ? fmtDate(r.last_movement) : 'never' %></small></td>
               <td class="right nowrap">
                 <% if (can('inventory.manage')) { %>
@@ -148,7 +148,7 @@
     </div>
     <div class="card__foot">
       <small class="muted">Stock value is what is on the shelf at the last known cost price. It is not an
-        expense — the money left when the stock was <em>bought</em>, which is already in the expense ledger.</small>
+        expense, the money left when the stock was <em>bought</em>, which is already in the expense ledger.</small>
     </div>
   </div>
 <% } %>

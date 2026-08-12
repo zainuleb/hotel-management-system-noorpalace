@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 
 /**
- * Password hashing with scrypt from Node's own crypto module — no third-party
+ * Password hashing with scrypt from Node's own crypto module, no third-party
  * dependency, and the parameters are stored alongside the hash so they can be
  * raised later without invalidating existing passwords.
  */
@@ -56,7 +56,7 @@ export function safeEquals(a: string, b: string): boolean {
 
 /**
  * Rejects the handful of passwords that would otherwise end up on every
- * install. Deliberately light — this is a LAN system used by hotel staff, not
+ * install. Deliberately light. This is a LAN system used by hotel staff, not
  * an internet-facing service.
  */
 const WEAK = new Set(['password', '12345678', 'admin123', 'hotel123', 'qwerty123', '11111111']);

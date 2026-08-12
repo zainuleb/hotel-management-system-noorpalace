@@ -20,18 +20,18 @@
         <div class="field">
           <label for="room_id">Room</label>
           <select id="room_id" name="room_id" required>
-            <option value="">— choose a room —</option>
+            <option value="">Choose a room…</option>
             <% rooms.forEach(function (r) { %>
               <option value="<%= r.id %>" data-rate="<%= (r.base_rate / 100).toFixed(2) %>"
                 <%= r.available ? '' : 'disabled' %>
                 <%= r.available && Number(form.room_id) === r.id ? 'selected' : '' %>>
-                <%= r.number %> · <%= r.type_name %> · <%= hotel.currency_symbol %> <%= fmt(r.base_rate) %><%= r.available ? '' : ' — ' + r.blocked_reason %>
+                <%= r.number %> · <%= r.type_name %> · <%= hotel.currency_symbol %> <%= fmt(r.base_rate) %><%= r.available ? '' : ', ' + r.blocked_reason %>
               </option>
             <% }) %>
           </select>
           <small id="room-hint" class="muted">
             <%= rooms.filter(function (r) { return r.available; }).length %> of <%= rooms.length %> rooms free for these dates.
-            Greyed-out rooms are taken — the reason is shown beside each one.
+            Greyed-out rooms are taken, the reason is shown beside each one.
           </small>
         </div>
         <div class="field">
@@ -75,13 +75,13 @@
           <label for="full_name">Full name</label>
           <input id="full_name" name="full_name" value="<%= guest ? guest.full_name : '' %>" autocomplete="off" required>
           <div id="guest-matches"></div>
-          <small>Start typing — if this guest has stayed before, pick them to reuse their record.</small>
+          <small>Start typing. If this guest has stayed before, pick them to reuse their record.</small>
         </div>
         <div class="field">
           <label for="id_number">ID number</label>
           <input id="id_number" name="id_number" value="<%= guest ? guest.id_number : '' %>"
                  placeholder="CNIC, passport, or any other ID">
-          <small>Any format — CNIC with dashes, a passport number, a national ID. Recorded exactly as typed.</small>
+          <small>Any format: a CNIC with dashes, a passport number, a national ID. Recorded exactly as typed.</small>
         </div>
         <div class="field">
           <label for="phone">Phone</label>
@@ -109,7 +109,7 @@
         <label class="check">
           <input type="checkbox" name="check_in_now" value="1">
           <span>
-            <strong>Walk-in — check this guest in right now</strong>
+            <strong>Walk-in: check this guest in right now</strong>
             <small class="muted">Use this when the guest is standing at the desk. Leave it unticked for an advance reservation.</small>
           </span>
         </label>
@@ -162,14 +162,14 @@
         .then(function (r) { return r.json(); })
         .then(function (rooms) {
           var previous = roomSelect.value;
-          roomSelect.innerHTML = '<option value="">— choose a room —</option>';
+          roomSelect.innerHTML = '<option value="">Choose a room…</option>';
           var freeCount = 0;
           rooms.forEach(function (r) {
             var opt = document.createElement('option');
             opt.value = r.id;
             opt.dataset.rate = (r.base_rate / 100).toFixed(2);
             opt.textContent = r.number + ' · ' + r.type_name + ' · ' + symbol + ' ' + (r.base_rate / 100).toFixed(2) +
-              (r.available ? '' : ' — ' + r.blocked_reason);
+              (r.available ? '' : ', ' + r.blocked_reason);
             // A taken room stays visible but cannot be picked, so the reason is
             // on screen instead of the room simply vanishing from the list.
             opt.disabled = !r.available;
@@ -179,7 +179,7 @@
           });
           document.getElementById('room-hint').textContent =
             freeCount + ' of ' + rooms.length + ' rooms free for these dates. ' +
-            'Greyed-out rooms are taken — the reason is shown beside each one.';
+            'Greyed-out rooms are taken, the reason is shown beside each one.';
           renderSummary();
         })
         .catch(function () { /* keep whatever is already in the list */ });

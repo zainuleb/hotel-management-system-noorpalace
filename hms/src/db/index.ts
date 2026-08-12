@@ -124,7 +124,7 @@ export function initSchema(): void {
 
 /**
  * The expense headings from the hotel's own monthly report sheet. Seeded once,
- * on an empty table only — renaming or adding to them afterwards is the
+ * on an empty table only, renaming or adding to them afterwards is the
  * owner's business and is never overwritten.
  */
 const DEFAULT_EXPENSE_CATEGORIES: [string, 'expense' | 'income'][] = [

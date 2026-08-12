@@ -160,7 +160,7 @@ export function isRoomAvailable(
   return roomConflict(roomId, from, to, excludeBookingId) === undefined;
 }
 
-/** Rooms currently checked in — the valid targets for an "Add to Room" charge. */
+/** Rooms currently checked in, the valid targets for an "Add to Room" charge. */
 export function occupiedRoomsNow(date: string): (RoomWithType & { booking_id: number; guest_name: string; code: string })[] {
   return all(
     `SELECT r.*, t.name AS type_name, t.base_rate AS base_rate, t.capacity AS type_capacity,
@@ -210,7 +210,7 @@ export function roomAvailability(
       return {
         ...room,
         available: false,
-        blocked_reason: room.maintenance_note ? `under maintenance — ${room.maintenance_note}` : 'under maintenance',
+        blocked_reason: room.maintenance_note ? `under maintenance, ${room.maintenance_note}` : 'under maintenance',
         held_by_code: null,
         held_until: null,
       };

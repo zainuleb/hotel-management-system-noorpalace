@@ -65,9 +65,9 @@
                     <span class="badge badge--<%= e.kind === 'income' ? 'ok' : '' %>"><%= e.category_name %></span>
                   </td>
                   <td><%= e.description %><% if (e.notes) { %><br><small class="muted"><%= e.notes %></small><% } %></td>
-                  <td class="muted"><%= e.paid_to || '—' %></td>
+                  <td class="muted"><%= e.paid_to || '-' %></td>
                   <td><small><%= domain.PAYMENT_MODE_LABELS[e.payment_mode] %><% if (e.reference) { %><br><span class="muted"><%= e.reference %></span><% } %></small></td>
-                  <td class="num"><%= e.kind === 'income' ? '+' : '−' %> <%= fmt(e.amount_minor) %></td>
+                  <td class="num"><%= e.kind === 'income' ? '+' : '-' %> <%= fmt(e.amount_minor) %></td>
                   <td class="right nowrap">
                     <% if (can('expenses.manage')) { %>
                       <a class="btn btn--sm" href="/expenses?from=<%= filters.from %>&to=<%= filters.to %>&edit=<%= e.id %>">Edit</a>
@@ -196,7 +196,7 @@
         <div class="card__body">
           <p class="mb-0 muted"><small>
             Expenses are recorded against the <strong>date the money was spent</strong>, not the date you type them
-            in — so a bill entered late still lands in the right month. They feed straight into the
+            in, so a bill entered late still lands in the right month. They feed straight into the
             <a href="/reports/daily">daily</a> and <a href="/reports/monthly">monthly</a> profit figures.
           </small></p>
         </div>

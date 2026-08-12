@@ -155,8 +155,8 @@ export function createOrder(input: CreateOrderInput, req: Request): Order {
 
     const where =
       input.order_type === 'room_service'
-        ? `Room ${getRoom(roomId ?? 0)?.number ?? '—'}`
-        : `Table ${input.table_no || '—'}`;
+        ? `Room ${getRoom(roomId ?? 0)?.number ?? '-'}`
+        : `Table ${input.table_no || '-'}`;
     logActivity(req, 'created order', 'order', orderId, `${code} · ${where} · ${input.meal_type}`);
     return getOrder(orderId)!;
   });
@@ -333,7 +333,7 @@ export function updateOrder(id: number, input: UpdateOrderInput, req: Request): 
 
 /**
  * Switching between "Add to Room" and "Cash Now" after the order was placed.
- * The proposal asks for this to be free of manager approval, so it is — the
+ * The proposal asks for this to be free of manager approval, so it is, the
  * only bar is that a settled order has to have its invoice voided first.
  */
 export function setBillingMode(
@@ -399,7 +399,7 @@ export function markKotPrinted(id: number): void {
   run('UPDATE orders SET kot_printed_at = ? WHERE id = ?', nowTs(), id);
 }
 
-/** Orders that still need to reach the kitchen — the KOT queue. */
+/** Orders that still need to reach the kitchen, the KOT queue. */
 export function kitchenQueue(): OrderView[] {
   return all<OrderView>(`${ORDER_SELECT} WHERE o.status = 'open' ORDER BY o.id`);
 }
@@ -414,7 +414,7 @@ export interface RoomFoodTab {
 }
 
 /**
- * The running food tab on each room — meals charged to the room and not yet
+ * The running food tab on each room, meals charged to the room and not yet
  * settled on an invoice.
  *
  * Orders keep the room they were delivered to, so a guest who moves rooms

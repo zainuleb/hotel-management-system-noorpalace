@@ -4,8 +4,8 @@ import { toMinor } from '../lib/money.js';
 /**
  * Optional starter data offered by the setup wizard.
  *
- * The rooms match Hotel Noor Palace's actual layout — 101-108 on the ground
- * floor and 201-210 on the first — so the front desk can start taking bookings
+ * The rooms match Hotel Noor Palace's actual layout, 101-108 on the ground
+ * floor and 201-210 on the first, so the front desk can start taking bookings
  * straight away. **The rates are placeholders**: set the real ones under
  * Rooms & Room Types before going live.
  *
@@ -15,8 +15,8 @@ export function seedStarterData(): void {
   if (scalar('SELECT COUNT(*) FROM room_types') > 0) return;
 
   const types: [string, number, number, string][] = [
-    ['Standard', 5000, 2, 'Placeholder rate — change this to your real tariff'],
-    ['Deluxe', 8000, 3, 'Placeholder rate — for your better rooms'],
+    ['Standard', 5000, 2, 'Placeholder rate, change this to your real tariff'],
+    ['Deluxe', 8000, 3, 'Placeholder rate, for your better rooms'],
   ];
   const typeIds: Record<string, number> = {};
   for (const [name, rate, capacity, description] of types) {

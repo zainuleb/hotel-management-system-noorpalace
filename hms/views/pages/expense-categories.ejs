@@ -40,14 +40,14 @@
         <div class="field">
           <label for="kind">Type</label>
           <select id="kind" name="kind">
-            <option value="expense" <%= !editing || editing.kind === 'expense' ? 'selected' : '' %>>Expense — money out</option>
-            <option value="income" <%= editing && editing.kind === 'income' ? 'selected' : '' %>>Other income — money in</option>
+            <option value="expense" <%= !editing || editing.kind === 'expense' ? 'selected' : '' %>>Expense, money out</option>
+            <option value="income" <%= editing && editing.kind === 'income' ? 'selected' : '' %>>Other income, money in</option>
           </select>
         </div>
       </div>
       <label class="check">
         <input type="checkbox" name="is_active" value="1" <%= !editing || editing.is_active ? 'checked' : '' %>>
-        <span>In use — show it on the expense form</span>
+        <span>In use, show it on the expense form</span>
       </label>
       <div class="btn-row">
         <button class="btn btn--primary" type="submit"><%= editing ? 'Save' : 'Add category' %></button>
@@ -61,7 +61,7 @@
   <div class="card__body">
     <p class="mb-0 muted"><small>
       A category that already has entries against it cannot be deleted or switched between expense and
-      income — that would rewrite past reports. Switch it off instead: it disappears from the entry form
+      income. That would rewrite past reports. Switch it off instead: it disappears from the entry form
       but old figures stay exactly as they were.
     </small></p>
   </div>

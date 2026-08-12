@@ -61,7 +61,7 @@ export function dashboardPeriod(query: Record<string, unknown>): DashPeriod {
 /**
  * The owner's console: what the business earned, what it spent, what it kept,
  * how that compares with the period before, and the handful of things that
- * need attention today — all on one screen.
+ * need attention today, all on one screen.
  */
 router.get('/admin', requirePermission('reports.pnl'), (req, res) => {
   const period = dashboardPeriod(req.query as Record<string, unknown>);

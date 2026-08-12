@@ -20,7 +20,7 @@
 </div>
 
 <div class="print-head" style="display:none">
-  <h2><%= hotel.hotel_name %> — Daily Report</h2>
+  <h2><%= hotel.hotel_name %>: Daily Report</h2>
   <p><%= fmtDate(date) %></p>
 </div>
 
@@ -46,7 +46,7 @@
       <div class="stat__value" style="color:<%= report.profit_minor >= 0 ? 'var(--ok)' : 'var(--bad)' %>">
         <%= hotel.currency_symbol %> <%= fmt(Math.abs(report.profit_minor)) %>
       </div>
-      <div class="stat__meta">Sale <%= fmt(report.total_sale_minor) %> − expenses <%= fmt(report.expense_total_minor) %></div>
+      <div class="stat__meta">Sale <%= fmt(report.total_sale_minor) %> - expenses <%= fmt(report.expense_total_minor) %></div>
     </div>
   <% } %>
 </div>
@@ -67,7 +67,7 @@
           <% report.occupied_rooms.forEach(function (r) { %>
             <tr>
               <td><strong><%= r.room_number %></strong></td>
-              <td><%= r.floor || '—' %></td>
+              <td><%= r.floor || '-' %></td>
               <td><%= r.guest_name %></td>
               <td><a href="/bookings/<%= r.booking_id %>"><%= r.code %></a></td>
               <td class="nowrap"><small><%= fmtDate(r.arrival_date) %> → <%= fmtDate(r.departure_date) %></small></td>
@@ -115,7 +115,7 @@
       </table>
     </div>
     <div class="card__foot">
-      <small class="muted">"Cash collected" is money actually received today against any invoice, old or new —
+      <small class="muted">"Cash collected" is money actually received today against any invoice, old or new.
         use it to check the drawer. The sale figures above are what the hotel <em>earned</em> today.</small>
     </div>
   </div>
@@ -141,9 +141,9 @@
               <tr>
                 <td><%= e.category_name %></td>
                 <td><%= e.description %></td>
-                <td class="muted"><%= e.paid_to || '—' %></td>
+                <td class="muted"><%= e.paid_to || '-' %></td>
                 <td><small><%= domain.PAYMENT_MODE_LABELS[e.payment_mode] %></small></td>
-                <td class="num"><%= e.kind === 'income' ? '+' : '−' %> <%= fmt(e.amount_minor) %></td>
+                <td class="num"><%= e.kind === 'income' ? '+' : '-' %> <%= fmt(e.amount_minor) %></td>
               </tr>
             <% }) %>
           </tbody>
@@ -163,7 +163,7 @@
         <div><span>Restaurant sale</span><span><%= fmt(report.food_revenue_minor) %></span></div>
         <% if (report.other_income_minor) { %><div><span>Other income</span><span><%= fmt(report.other_income_minor) %></span></div><% } %>
         <div style="border-top:1px solid var(--line);font-weight:650"><span>Total sale</span><span><%= fmt(report.total_sale_minor) %></span></div>
-        <div><span>Less expenses</span><span>− <%= fmt(report.expense_total_minor) %></span></div>
+        <div><span>Less expenses</span><span>- <%= fmt(report.expense_total_minor) %></span></div>
         <div class="grand" style="color:<%= report.profit_minor >= 0 ? 'var(--ok)' : 'var(--bad)' %>">
           <span><%= report.profit_minor >= 0 ? 'Profit' : 'Loss' %></span>
           <span><%= hotel.currency_symbol %> <%= fmt(Math.abs(report.profit_minor)) %></span>

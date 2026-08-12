@@ -1,18 +1,18 @@
 # Hotel Management System
 
 Room booking and food service for a single hotel property, covering everything in
-*Hotel Management Software — Proposal v1.0*: reservations, check-in/out, the
+*Hotel Management Software Proposal v1.0*: reservations, check-in/out, the
 restaurant, combined billing, staff roles, reports and backups.
 
-It runs on **one Windows PC** and everyone else — reception, the kitchen, waiters
-on tablets, the accountant — uses it through a normal browser on the hotel's own
+It runs on **one Windows PC** and everyone else (reception, the kitchen, waiters
+on tablets, the accountant) uses it through a normal browser on the hotel's own
 wifi. **No internet connection is required**; nothing leaves the building.
 
 ---
 
 ## Quick start on Windows
 
-1. Install **Node.js LTS (v24 or newer)** from <https://nodejs.org> — default options.
+1. Install **Node.js LTS (v24 or newer)** from <https://nodejs.org> and accept the default options.
 2. Copy this whole folder onto the front-desk PC, e.g. `C:\HotelSystem`.
 3. Right-click `deploy\install-windows.ps1` → **Run with PowerShell**.
    Accept the administrator prompt so the firewall can be opened.
@@ -36,10 +36,10 @@ Full instructions, including printers and daily use, are in
 | **Food service** | Menu by Breakfast / Lunch / Dinner / Beverages / Extras, room-service and dine-in orders, kitchen queue, KOT printing |
 | **Billing** | "Add to Room" vs "Cash Now" vs complimentary, switchable after the order is placed; one combined invoice at check-out; tax and discounts; partial payments; 80/58 mm thermal receipts and A4 invoices |
 | **Staff** | Admin / Front Desk / Waiter / Accountant roles, forced password change on first sign-in, full activity log. Profit and expenses are visible to Admin and Accountant only |
-| **Expenses** | Ledger for salaries, utility bills, kitchen, general, laundry and maintenance — plus any other income. Editable categories, recorded against the date the money was spent |
+| **Expenses** | Ledger for salaries, utility bills, kitchen, general, laundry and maintenance, plus any other income. Editable categories, recorded against the date the money was spent |
 | **Daily report** | The evening sheet: rooms occupied with numbers and rent, restaurant sale, expenses, profit or loss for the day. Printable |
 | **Monthly report** | Total sale, expenses broken down by category, net profit or loss, occupancy, average room rate, and a day-by-day table. Printable |
-| **Admin dashboard** | Owner's console — sale, expenses, profit and occupancy against the previous period, cash position, what needs attention, quick expense entry, best rooms, recent activity |
+| **Admin dashboard** | Owner's console: sale, expenses, profit and occupancy against the previous period, cash position, what needs attention, quick expense entry, best rooms, recent activity |
 | **Reports** | Hub of eight: daily, monthly, year summary, sales & occupancy, room-wise performance, cash book, tax collected, outstanding. Printable, most export to CSV |
 | **Inventory** | Stock for kitchen, bar, housekeeping, linen and maintenance. Suppliers, reorder levels, purchases that post straight to the expense ledger, issues, wastage and stock-take adjustments, low-stock alerts, valuation and full movement history |
 | **Data** | Single-file SQLite database, automatic daily backups, one-click backup, restore with a safety copy |
@@ -48,13 +48,12 @@ Full instructions, including printers and daily use, are in
 
 ## How the money works
 
-* Every amount is stored as a whole number of **paisa**, never as a decimal, so
+* Every amount is stored as a whole number of **paisa**: never as a decimal, so
   totals cannot drift by a rounding error.
-* Food orders are stored **pre-tax**. Tax is applied once — on the walk-in
-  receipt, or on the guest's final bill — so "Add to Room" items can never be
+* Food orders are stored **pre-tax**. Tax is applied once, on the walk-in
+  receipt, or on the guest's final bill, so "Add to Room" items can never be
   taxed twice.
-* Room status (Available / Occupied / Reserved) is **derived from the bookings**,
-  not stored, so the board can never disagree with the booking list. Only
+* Room status (Available / Occupied / Reserved) is **derived from the bookings**: not stored, so the board can never disagree with the booking list. Only
   "Under Maintenance" is a stored flag.
 * A stay is a half-open range: arrive on the 10th, depart on the 12th = 2 nights,
   and the room is bookable again from the 12th.
@@ -67,8 +66,8 @@ Full instructions, including printers and daily use, are in
 * A mid-stay room change splits the stay into segments, so the guest is charged
   the right rate for the nights spent in each room. Meals stay attached to the
   room they were delivered to, and still land on the one bill at check-out.
-* Stock quantities are integers in **thousandths of a unit**, for the same
-  reason money is in paisa. Stock on hand is never stored — it is summed from
+* Stock quantities are integers in **thousandths of a unit**: for the same
+  reason money is in paisa. Stock on hand is never stored. It is summed from
   the movement table, so every figure can be explained line by line and a
   miscount is corrected with a recorded adjustment rather than an edit.
 * A room that is taken cannot be booked. The form shows it greyed out with who
@@ -126,10 +125,10 @@ src/
   config.ts            Ports, paths, environment
   db/                  SQLite wrapper, schema, optional starter data
   lib/                 Money, dates, sessions, permissions, validation, audit
-  services/            Business rules — rooms, bookings, orders, billing, reports
+  services/            Business rules, rooms, bookings, orders, billing, reports
   routes/              HTTP endpoints, one file per area
 views/                 EJS templates: pages/ for screens, print/ for paper
-public/                CSS and a little vanilla JS — no build step, no framework
+public/                CSS and a little vanilla JS, no build step, no framework
 deploy/                Windows installer and start scripts
 scripts/               Smoke test and demo data
 docs/                  Install guide and staff user guide

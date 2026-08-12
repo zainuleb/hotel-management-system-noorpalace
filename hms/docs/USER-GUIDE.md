@@ -7,7 +7,7 @@ use the same address; what you see depends on your role.
 
 ## Signing in
 
-Open the bookmark, enter your username and password. The first time, you will be
+Open the bookmark, enter your username and password. The first time. You will be
 asked to replace the temporary password with one of your own.
 
 Sign out from the bottom of the left-hand menu when you leave the desk. On a
@@ -23,7 +23,7 @@ The first screen answers "what is happening right now":
 * Occupancy, with a bar
 * Who is arriving and who is departing today, with **Check in** / **Check out**
   buttons right there
-* The room grid — **green** free, **red** occupied, **amber** reserved,
+* The room grid, **green** free, **red** occupied, **amber** reserved,
   **grey** under maintenance. Click a room to open the guest, or to start a
   booking if it is free.
 * A yellow bar if food has been charged to rooms and not yet billed
@@ -32,28 +32,28 @@ The first screen answers "what is happening right now":
 
 ## Taking a booking
 
-**Bookings → New booking**, or click a green room on the grid.
+**Bookings → New booking**: or click a green room on the grid.
 
 1. Set the arrival and departure dates. The room list refreshes to show only the
-   rooms free for the *whole* stay — a room already taken for one night in the
+   rooms free for the *whole* stay. A room already taken for one night in the
    middle will not appear.
 2. Pick the room. The nightly rate fills in from the room type; type over it for
    a negotiated rate.
-3. **Booking type** — "Room + Meals" makes this guest's breakfast complimentary
+3. **Booking type**, "Room + Meals" makes this guest's breakfast complimentary
    automatically.
 4. Start typing the guest's name. If they have stayed before, click their name to
    reuse the record and keep their history together.
 
 **Rooms that are already taken** appear in the list greyed out, with who has them
-and until when — so you can see at a glance why a room is not available instead
+and until when, so you can see at a glance why a room is not available instead
 of wondering where it went. They cannot be selected, and the system refuses the
 booking even if someone tries to force it through.
 
-**ID number** takes any format — a CNIC with dashes, a passport number, a
+**ID number** takes any format: a CNIC with dashes, a passport number, a
 national ID from anywhere. It is stored exactly as typed and never reformatted.
 **Nationality** is a dropdown of every country, with the ones you see most at the
 top.
-5. If the guest is standing at the desk right now, tick **Walk-in — check this
+5. If the guest is standing at the desk right now, tick **Walk-in: check this
    guest in right now**. Leave it unticked for an advance reservation.
 
 The summary line under the dates shows the nights and room charge as you type.
@@ -78,26 +78,26 @@ lines separately.
 ### Cancelling
 
 Only a reservation can be cancelled. A guest who has already checked in must be
-checked out instead — that is what produces the bill.
+checked out instead. That is what produces the bill.
 
 ---
 
 ## Food orders
 
-**Orders → + Room service** or **+ Dine-in**, or from a checked-in booking.
+**Orders → + Room service** or **+ Dine-in**: or from a checked-in booking.
 
 1. Choose room service (pick the room) or dine-in (type the table number).
-2. Choose the meal — Breakfast, Lunch or Dinner. It is pre-selected from the
+2. Choose the meal, Breakfast, Lunch or Dinner. It is pre-selected from the
    time of day.
 3. Choose how it is paid:
-   * **Add to Room** — goes onto the guest's final bill at check-out. Only
+   * **Add to Room**: goes onto the guest's final bill at check-out. Only
      rooms with a guest actually checked in can be chosen.
-   * **Cash Now** — the customer pays straight away and you print a receipt.
-   * **Complimentary** — no charge.
-4. Tap items on the menu to add them; use **+ / −** to change quantities.
-5. **Save order**, then **Print KOT** for the kitchen.
+   * **Cash Now**: the customer pays straight away and you print a receipt.
+   * **Complimentary**: no charge.
+4. Tap items on the menu to add them; use **+ / -** to change quantities.
+5. **Save order**: then **Print KOT** for the kitchen.
 
-**Picked the wrong one?** Open the order and use *Change how this is billed* —
+**Picked the wrong one?** Open the order and use *Change how this is billed*.
 you can switch between Add to Room and Cash Now yourself, no manager needed,
 right up until the order is billed.
 
@@ -106,14 +106,14 @@ Press **Served** as each goes out.
 
 ### Meals added later
 
-A meal can be entered at any point while the guest is checked in — including the
+A meal can be entered at any point while the guest is checked in, including the
 morning after it was served. Everything charged to the room is collected onto the
 one bill at check-out, whenever it was typed in.
 
 Each order stays attached to the room it went to. On the room board, an occupied
 room shows its **running food tab** so you can see what is sitting on that door
 before the guest reaches the desk. If a guest changed rooms mid-stay, the booking
-page separates the meals by room — the earlier meals stay on the earlier room,
+page separates the meals by room, the earlier meals stay on the earlier room,
 and both still appear on the single final bill.
 
 To take payment on a Cash Now order: open it → **Take payment now** → choose
@@ -129,11 +129,11 @@ The bill shows room charges (one line per room the guest used) and every meal
 charged to the room, grouped under Breakfast, Lunch and Dinner, then discount,
 tax and the total.
 
-* **Leaving early?** Change the check-out date and press **Recalculate** — the
+* **Leaving early?** Change the check-out date and press **Recalculate**: the
   nights charged change with it.
 * **Giving a discount?** Enter it and press **Recalculate**.
 * **Amount paid now** starts at the full total. Reduce it for a part payment, or
-  set it to 0 to bill the company later — the balance shows up under
+  set it to 0 to bill the company later, the balance shows up under
   **Outstanding** until it is paid.
 
 Press **Check out & create invoice**. The invoice opens, and from there you can
@@ -146,7 +146,7 @@ The room becomes available again the moment the guest checks out.
 ## Money
 
 **Invoices** lists every bill with what has been paid and what is outstanding.
-Open one to record a further payment — part payments are fine and each is logged
+Open one to record a further payment, part payments are fine and each is logged
 with the mode, reference and who took it.
 
 **Outstanding** is the chase list: every unpaid or partly paid bill with its
@@ -163,16 +163,16 @@ booking screen offers **Re-issue invoice**.
 **Admin Dashboard** in the left menu (Administrator and Accountant). One screen
 answering "how is the business doing":
 
-* Total sale, total expenses, net profit and occupancy — each compared with the
+* Total sale, total expenses, net profit and occupancy, each compared with the
   same length of time immediately before, so you see direction and not just a number
-* **Where the money came from** — room rent, restaurant split into charged-to-rooms
+* **Where the money came from**: room rent, restaurant split into charged-to-rooms
   and cash, plus other income, against the previous period
-* **Where it went** — every expense category with its share and what percentage of
+* **Where it went**: every expense category with its share and what percentage of
   sales it eats
-* **Cash position** — received, paid out, net movement, and what guests still owe
-* **Needs attention** — guests in house, arrivals and departures still to process,
+* **Cash position**: received, paid out, net movement, and what guests still owe
+* **Needs attention**: guests in house, arrivals and departures still to process,
   open kitchen orders, food on rooms not yet billed, rooms under maintenance
-* **Quick expense** — record a bill without leaving the page
+* **Quick expense**: record a bill without leaving the page
 * Best performing rooms, latest expenses, and recent staff activity
 
 Pick a period at the top: today, yesterday, last 7 days, this month, last month,
@@ -186,7 +186,7 @@ this year, or your own dates.
 
 | Report | What it answers |
 |---|---|
-| Daily Report | What happened yesterday — rooms, sales, expenses, profit |
+| Daily Report | What happened yesterday: rooms, sales, expenses, profit |
 | Monthly Report | The month's profit and loss with expenses by category |
 | Year Summary | Twelve months side by side |
 | Sales & Occupancy | Revenue by day, meal-wise sales, best sellers, occupancy |
@@ -203,8 +203,8 @@ obvious. Use it to decide which rooms need a price change or attention.
 
 ### Cash book
 
-Every movement of money in one chronological list — guest payments in, expenses
-out — with a running balance and a breakdown by payment mode.
+Every movement of money in one chronological list, guest payments in, expenses
+out, with a running balance and a breakdown by payment mode.
 
 **The Cash row is the one to check against the box**: cash taken from guests less
 cash paid out. Card and bank transfer rows should match your statements.
@@ -216,7 +216,7 @@ movement across the period, not your bank balance.
 
 Tax charged on invoices, month by month, with the taxable amount behind it.
 
-Tax is taken from what each invoice actually charged, never recalculated — so
+Tax is taken from what each invoice actually charged, never recalculated, so
 changing the rate in Settings never rewrites history. Voided invoices are
 excluded, because no tax was ever due on them. Treat it as a working figure for
 your accountant, not a filed return.
@@ -225,16 +225,16 @@ your accountant, not a filed return.
 
 ## Sales & occupancy
 
-Pick a period at the top — today, yesterday, last 7 days, this month, last 30
+Pick a period at the top: today, yesterday, last 7 days, this month, last 30
 days, or your own dates. Every table has an **Export CSV** button that opens in
 Excel.
 
-* **Revenue by day** — room income against food income
-* **Meal-wise sales** — Breakfast vs Lunch vs Dinner
-* **Food billing split** — this is the reconciliation one. "Cash Now" should
+* **Revenue by day**: room income against food income
+* **Meal-wise sales**, Breakfast vs Lunch vs Dinner
+* **Food billing split**. This is the reconciliation one. "Cash Now" should
   match the cash drawer for the day. "Add to Room" is money that will arrive on
   guest invoices at check-out, not cash you should already be holding.
-* **Payments by mode** — what came in as cash, card, transfer, online
+* **Payments by mode**: what came in as cash, card, transfer, online
 * **Best sellers**, **Occupancy**, **Outstanding bills**
 
 ---
@@ -244,7 +244,7 @@ Excel.
 **Menu** → add items under Breakfast, Lunch, Dinner, Beverages or Extras with a
 price.
 
-Run out of something? Press **Take off** — it disappears from the ordering screen
+Run out of something? Press **Take off**. It disappears from the ordering screen
 straight away and comes back with **Put back**. Items that appear on past orders
 cannot be deleted (that would corrupt old bills); take them off the menu instead.
 
@@ -252,28 +252,28 @@ cannot be deleted (that would corrupt old bills); take them off the menu instead
 
 ## Rooms
 
-**Room Status** shows the grid for any date — use ‹ Prev and Next › to look ahead
+**Room Status** shows the grid for any date, use ‹ Prev and Next › to look ahead
 at a week. **Availability** answers "what have we got free between these dates".
 
-Administrators can add rooms and room types under **Rooms & Room Types**, and
+Administrators can add rooms and room types under **Rooms & Room Types**: and
 mark a room **Maintenance** so it stops being offered. A room with a guest in it
-cannot be marked for maintenance — move them or check them out first.
+cannot be marked for maintenance. Move them or check them out first.
 
 ---
 
 ## If something goes wrong
 
-**"Security check failed"** — the page sat open too long. Reload it and try again.
+**"Security check failed"**: the page sat open too long. Reload it and try again.
 
-**"Your session expired"** — sign in again. Sessions last 12 hours.
+**"Your session expired"**: sign in again. Sessions last 12 hours.
 
-**A guest is missing from the room list when taking an order** — they are not
+**A guest is missing from the room list when taking an order**. They are not
 checked in. Food can only be charged to a room with a guest actually in it.
 
-**Nobody can reach the system** — the host PC is off, or the black window on it
+**Nobody can reach the system**: the host PC is off, or the black window on it
 was closed. Start it from the desktop shortcut.
 
-**Something looks wrong in a bill** — check **Admin → Activity Log**. Every
+**Something looks wrong in a bill**: check **Admin → Activity Log**. Every
 booking, order, invoice and payment change is recorded with who did it and when.
 
 ---
@@ -291,14 +291,14 @@ The categories match the monthly report sheet:
 * General Expense
 * Laundry Expense
 * Maintenance
-* Other Income — for money coming in that is not a room or a meal
+* Other Income, for money coming in that is not a room or a meal
 
 To record one: fill in the date, category, description and amount, say how it
 was paid, and add the supplier and bill number if you have them. Press
 **Record entry**.
 
 **The date matters.** An entry is counted on the date the money was spent, not
-the day you typed it in — so a July electricity bill entered in August still
+the day you typed it in, so a July electricity bill entered in August still
 lands in July's report. Always check the date field before saving.
 
 Add, rename or switch off categories under **Categories**. A category that
@@ -339,17 +339,17 @@ received today against any bill, old or new. Use that one to check the drawer.
 **Reports → Monthly Report** (Administrator and Accountant). Pick a month at the
 top and press **Print** for a copy.
 
-* **Income** — room rent with room-nights and average rate, restaurant sales
+* **Income**: room rent with room-nights and average rate, restaurant sales
   split between charged-to-rooms and cash, plus any other income
-* **Expenses** — one line per category with its share of the total
-* **Profit & loss** — total sale, every expense heading, and the net figure
-* **Day by day** — a table of each date's rooms, rent, restaurant, expenses and
+* **Expenses**: one line per category with its share of the total
+* **Profit & loss**: total sale, every expense heading, and the net figure
+* **Day by day**: a table of each date's rooms, rent, restaurant, expenses and
   profit. Click any date to open that day's report
 
 ### One thing to watch
 
 A month's salaries entered on a single date will make that one day look like a
-heavy loss on the daily report. That is correct — the money did go out that day.
+heavy loss on the daily report. That is correct, the money did go out that day.
 Judge the business on the **monthly** figure, where those costs sit against a
 full month of income.
 
@@ -367,8 +367,8 @@ Front desk and administrators can record stock; waiters can look but not change.
 
 ### Setting it up once
 
-1. **Suppliers** — add who you buy from.
-2. **Stock Items** — add each thing you want to track: name, what it is counted
+1. **Suppliers**: add who you buy from.
+2. **Stock Items**: add each thing you want to track: name, what it is counted
    in (kg, litre, pcs…), the cost you pay, and the level at which it should be
    reordered. Enter what is on the shelf right now as **opening stock** so the
    figure starts out true.
@@ -378,7 +378,7 @@ toiletries and light bulbs are worth it. Individual spices usually are not.
 
 ### Day to day
 
-From **Stock Movements**, or the **In** / **Out** buttons on the stock list:
+From **Stock Movements**: or the **In** / **Out** buttons on the stock list:
 
 | Entry | When to use it |
 |---|---|
@@ -390,19 +390,19 @@ From **Stock Movements**, or the **In** / **Out** buttons on the stock list:
 | **Returned to supplier** | Sent back |
 
 **A purchase can post itself to the expenses ledger.** Leave *Also record this as
-an expense* ticked and pick the heading (usually Kitchen Expense) — the bill goes
+an expense* ticked and pick the heading (usually Kitchen Expense), the bill goes
 into the profit figures without anyone typing it twice. Untick it if the bill has
 already been entered by hand, or you will count it twice.
 
 ### Things the system will not let you do, on purpose
 
 * **Stock cannot go below zero.** If you try to issue more than the book says is
-  there, it stops you — that always means a purchase was never entered. Record
+  there. It stops you. That always means a purchase was never entered. Record
   the missing purchase, or use a stock-take fix.
 * **The stock figure cannot be edited directly.** It is the sum of every entry,
   which is what makes it trustworthy. Correcting a miscount means recording a
   stock-take fix, and that leaves a note of who changed what and why.
-* **An item with history cannot be deleted.** Switch it off instead — it drops
+* **An item with history cannot be deleted.** Switch it off instead. It drops
   off the stock list and old figures stay exactly as they were.
 
 ### Knowing what to buy
@@ -414,5 +414,5 @@ items, with their usual supplier. The same list appears on the Admin Dashboard.
 ### What stock value means
 
 The value shown is what is on the shelf at the last price you paid. **It is not
-an expense** — the money left the business when the stock was *bought*, and that
+an expense**: the money left the business when the stock was *bought*, and that
 is already in the expense ledger. Do not add the two together.

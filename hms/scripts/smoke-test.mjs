@@ -29,8 +29,8 @@ function check(name, condition, detail = '') {
     passed++;
     console.log(`  [32m✓[0m ${name}`);
   } else {
-    failures.push(`${name}${detail ? ` — ${detail}` : ''}`);
-    console.log(`  [31m✗[0m ${name}${detail ? ` — ${detail}` : ''}`);
+    failures.push(`${name}${detail ? `, ${detail}` : ''}`);
+    console.log(`  [31m✗[0m ${name}${detail ? `, ${detail}` : ''}`);
   }
 }
 
@@ -123,7 +123,7 @@ function cleanup() {
 
 try {
   await waitForServer();
-  console.log('\nHotel Management System — end to end check\n');
+  console.log('\nHotel Management System, end to end check\n');
 
   /* --- setup ------------------------------------------------------------ */
   console.log('Setup');
@@ -248,7 +248,7 @@ try {
   const receipt = await GET(`/invoices/${invoice2Id}/receipt`);
   check('thermal receipt renders', receipt.status === 200 && receipt.text.includes('SALE RECEIPT'));
 
-  /* Switching an order's billing after it was placed — no approval needed. */
+  /* Switching an order's billing after it was placed. No approval needed. */
   const order3 = await POST('/orders', {
     order_type: 'dine_in',
     meal_type: 'breakfast',
@@ -426,7 +426,7 @@ try {
   const cashbook = await GET(`/reports/cashbook?preset=custom&from=${dayOffset(0)}&to=${dayOffset(0)}`);
   check('cash book loads', cashbook.status === 200 && cashbook.text.includes('Every movement'));
   check('cash book shows expenses as money out', cashbook.text.includes('Staff salary'));
-  check('cash book shows guest payments as money in', /Payment —/.test(cashbook.text));
+  check('cash book shows guest payments as money in', /Payment,/.test(cashbook.text));
 
   const tax = await GET(`/reports/tax?preset=custom&from=${dayOffset(0)}&to=${dayOffset(0)}`);
   check('tax report loads', tax.status === 200 && tax.text.includes('Taxable amount'));
@@ -461,7 +461,7 @@ try {
   /* --- booking guard, countries, room tabs --------------------------------- */
   console.log('\nGuards and guest details');
 
-  /* The first booking was checked out, so put a live guest in a room — these
+  /* The first booking was checked out, so put a live guest in a room, these
      checks are about what the screens show while someone is in the hotel. */
   const liveRooms = [...(await GET(`/rooms/availability?from=${dayOffset(0)}&to=${dayOffset(2)}`)).text
     .matchAll(/\/bookings\/new\?room_id=(\d+)/g)].map((m) => Number(m[1]));
@@ -601,7 +601,7 @@ try {
   }, '/account/password');
   check('a waiter can set their own password', changed.location === '/orders', changed.location ?? '');
 
-  /* 403 specifically — a redirect would mean something else stopped the request. */
+  /* 403 specifically. A redirect would mean something else stopped the request. */
   for (const [path, label] of [
     ['/reports', 'the reports'],
     ['/expenses', 'the expense ledger'],

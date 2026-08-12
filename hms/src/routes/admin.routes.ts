@@ -96,7 +96,7 @@ router.post('/admin/users/:id/reset-password', requirePermission('users.manage')
   logActivity(req, 'reset password', 'user', id, user.username);
   req.flash(
     'info',
-    `Temporary password for ${user.username}: ${temporary} — give it to them now, it is not shown again. They must change it at first sign-in.`,
+    `Temporary password for ${user.username}: ${temporary}. Give it to them now. It is not shown again. They must change it at first sign-in.`,
   );
   res.redirect('/admin/users');
 });

@@ -7,8 +7,8 @@ import type { Expense, ExpenseCategory, LedgerKind, PaymentMode } from '../types
 
 /**
  * The money side of the business that has nothing to do with a guest: salaries,
- * utility bills, kitchen purchases, laundry, maintenance — the headings from
- * the hotel's own monthly report sheet — plus any income that is not a room or
+ * utility bills, kitchen purchases, laundry, maintenance, the headings from
+ * the hotel's own monthly report sheet, plus any income that is not a room or
  * a meal.
  *
  * Recorded against a *date*, not a timestamp, because that is how the owner
@@ -69,7 +69,7 @@ export function deleteCategory(id: number, req: Request): void {
   const used = scalar('SELECT COUNT(*) FROM expenses WHERE category_id = ?', id);
   if (used) {
     throw new ValidationError(
-      `"${category.name}" has ${used} entr${used === 1 ? 'y' : 'ies'} recorded against it. Deleting it would change past reports — switch it off instead and it will stop appearing on the form.`,
+      `"${category.name}" has ${used} entr${used === 1 ? 'y' : 'ies'} recorded against it. Deleting it would change past reports. Switch it off instead and it will stop appearing on the form.`,
     );
   }
   run('DELETE FROM expense_categories WHERE id = ?', id);
@@ -241,7 +241,7 @@ export interface CategoryTotal {
   amount_minor: number;
 }
 
-/** One row per category that had activity — the body of the monthly report. */
+/** One row per category that had activity, the body of the monthly report. */
 export function totalsByCategory(from: string, to: string): CategoryTotal[] {
   return all<CategoryTotal>(
     `SELECT c.id AS category_id, c.name AS category_name, c.kind AS kind,

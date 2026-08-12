@@ -163,7 +163,7 @@ router.post('/rooms', requirePermission('rooms.manage'), (req, res) => {
 });
 
 /**
- * Adds a whole floor at once. Accepts `101-108`, `101,102,105`, or a mix —
+ * Adds a whole floor at once. Accepts `101-108`, `101,102,105`, or a mix.
  * which is how a room list actually gets written down.
  */
 router.post('/rooms/bulk', requirePermission('rooms.manage'), (req, res) => {

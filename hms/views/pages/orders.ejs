@@ -63,9 +63,9 @@
               <td class="nowrap"><small><%= fmtDateTime(o.created_at) %></small></td>
               <td>
                 <% if (o.order_type === 'room_service') { %>
-                  Room <%= o.room_number || '—' %><% if (o.guest_full_name) { %><br><small class="muted"><%= o.guest_full_name %></small><% } %>
+                  Room <%= o.room_number || '-' %><% if (o.guest_full_name) { %><br><small class="muted"><%= o.guest_full_name %></small><% } %>
                 <% } else { %>
-                  Table <%= o.table_no || '—' %><% if (o.guest_name) { %><br><small class="muted"><%= o.guest_name %></small><% } %>
+                  Table <%= o.table_no || '-' %><% if (o.guest_name) { %><br><small class="muted"><%= o.guest_name %></small><% } %>
                 <% } %>
               </td>
               <td><%= domain.MEAL_LABELS[o.meal_type] %></td>

@@ -3,7 +3,7 @@
 
   It does NOT delete the hotel's data. The database and every backup stay in
   the data folder, so the system can be reinstalled later with everything
-  intact — or the folder can be copied to a different PC.
+  intact, or the folder can be copied to a different PC.
 #>
 
 $ErrorActionPreference = 'SilentlyContinue'
@@ -28,6 +28,6 @@ if ($rule) {
 }
 
 Write-Host ""
-Write-Host "  Done. Your data has NOT been deleted — it is still in the data folder." -ForegroundColor Cyan
+Write-Host "  Done. Your data has NOT been deleted. It is still in the data folder." -ForegroundColor Cyan
 Write-Host ""
 Read-Host 'Press Enter to close'

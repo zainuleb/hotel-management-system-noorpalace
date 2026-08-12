@@ -9,7 +9,7 @@
     <% orders.forEach(function (o) { %>
       <div class="card">
         <div class="card__head">
-          <h3><%= o.order_type === 'room_service' ? 'Room ' + (o.room_number || '—') : 'Table ' + (o.table_no || '—') %></h3>
+          <h3><%= o.order_type === 'room_service' ? 'Room ' + (o.room_number || '-') : 'Table ' + (o.table_no || '-') %></h3>
           <div class="spacer"></div>
           <span class="badge badge--warn"><%= domain.MEAL_LABELS[o.meal_type] %></span>
         </div>

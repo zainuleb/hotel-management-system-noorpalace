@@ -62,7 +62,7 @@
             <tr>
               <td><strong><%= r.number %></strong><% if (r.amenities) { %><br><small class="muted"><%= r.amenities %></small><% } %></td>
               <td><%= r.type_name %></td>
-              <td><%= r.floor || '—' %></td>
+              <td><%= r.floor || '-' %></td>
               <td>
                 <% if (!r.is_active) { %><span class="badge">Inactive</span>
                 <% } else if (r.is_out_of_service) { %><span class="badge badge--warn">Maintenance</span>

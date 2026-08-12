@@ -52,12 +52,12 @@
               <td><a href="/invoices/<%= i.id %>"><strong><%= i.number %></strong></a>
                 <% if (i.booking_code) { %><br><small class="muted"><%= i.booking_code %></small><% } %></td>
               <td class="nowrap"><small><%= fmtDateTime(i.created_at) %></small></td>
-              <td><%= i.guest_name || '—' %></td>
+              <td><%= i.guest_name || '-' %></td>
               <td><small><%= i.kind === 'stay' ? 'Stay' : 'Food sale' %></small></td>
               <td class="num"><%= fmt(i.total_minor) %></td>
               <td class="num"><%= fmt(i.paid_minor) %></td>
               <td class="num <%= i.balance_minor > 0 && i.status !== 'void' ? 'due' : '' %>">
-                <%= i.status === 'void' ? '—' : fmt(i.balance_minor) %>
+                <%= i.status === 'void' ? '-' : fmt(i.balance_minor) %>
               </td>
               <td>
                 <% var c = i.status === 'paid' ? 'ok' : (i.status === 'partial' ? 'warn' : (i.status === 'void' ? '' : 'bad')); %>

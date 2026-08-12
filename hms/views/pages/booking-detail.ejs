@@ -42,9 +42,9 @@
     <div class="card__body">
       <dl class="kv">
         <dt>Guest</dt><dd><a href="/guests/<%= guest.id %>"><%= guest.full_name %></a></dd>
-        <dt>Phone</dt><dd><%= guest.phone || '—' %></dd>
-        <dt>Nationality</dt><dd><%= guest.nationality || '—' %></dd>
-        <dt>ID number</dt><dd><%= guest.id_number || '—' %></dd>
+        <dt>Phone</dt><dd><%= guest.phone || '-' %></dd>
+        <dt>Nationality</dt><dd><%= guest.nationality || '-' %></dd>
+        <dt>ID number</dt><dd><%= guest.id_number || '-' %></dd>
         <dt>Arrival</dt><dd><%= fmtDate(booking.arrival_date) %><%= booking.checked_in_at ? ' (in at ' + fmtDateTime(booking.checked_in_at) + ')' : '' %></dd>
         <dt>Departure</dt><dd><%= fmtDate(booking.departure_date) %><%= booking.checked_out_at ? ' (out at ' + fmtDateTime(booking.checked_out_at) + ')' : '' %></dd>
         <dt>Nights</dt><dd><%= nights %></dd>
@@ -53,7 +53,7 @@
         <dt>Created</dt><dd><%= fmtDateTime(booking.created_at) %></dd>
         <% if (booking.notes) { %><dt>Notes</dt><dd><%= booking.notes %></dd><% } %>
         <% if (booking.status === 'cancelled') { %>
-          <dt>Cancelled</dt><dd><%= fmtDateTime(booking.cancelled_at) %><%= booking.cancel_reason ? ' — ' + booking.cancel_reason : '' %></dd>
+          <dt>Cancelled</dt><dd><%= fmtDateTime(booking.cancelled_at) %><%= booking.cancel_reason ? ', ' + booking.cancel_reason : '' %></dd>
         <% } %>
       </dl>
     </div>
@@ -92,7 +92,7 @@
             <div class="field">
               <label for="move-room">Move to room</label>
               <select id="move-room" name="room_id" required>
-                <option value="">— choose —</option>
+                <option value="">Choose…</option>
                 <% freeRooms.forEach(function (r) { %>
                   <option value="<%= r.id %>"><%= r.number %> · <%= r.type_name %> · <%= hotel.currency_symbol %> <%= fmt(r.base_rate) %></option>
                 <% }) %>
@@ -141,7 +141,7 @@
       <div class="totals mt-1">
         <div><span>Room charges</span><span><%= fmt(draft.room_charges_minor) %></span></div>
         <div><span>Food charges</span><span><%= fmt(draft.food_charges_minor) %></span></div>
-        <% if (draft.discount_minor) { %><div><span>Discount</span><span>− <%= fmt(draft.discount_minor) %></span></div><% } %>
+        <% if (draft.discount_minor) { %><div><span>Discount</span><span>- <%= fmt(draft.discount_minor) %></span></div><% } %>
         <% if (draft.tax_minor) { %><div><span><%= hotel.tax_label %> (<%= draft.tax_percent %>%)</span><span><%= fmt(draft.tax_minor) %></span></div><% } %>
         <div class="grand"><span>Total</span><span><%= hotel.currency_symbol %> <%= fmt(draft.total_minor) %></span></div>
         <% if (draft.complimentary_minor) { %>
@@ -203,7 +203,7 @@
   </div>
   <div class="card__foot">
     <small class="muted">
-      Meals can be added at any point while the guest is checked in — including
+      Meals can be added at any point while the guest is checked in, including
       one entered the morning after it was served. Everything charged to the room
       is collected onto the single bill at check-out, whenever it was entered.
       <% if (orderGroups.length > 1) { %>
@@ -243,7 +243,7 @@
         <% history.forEach(function (h) { %>
           <li>
             <time><%= fmtDateTime(h.created_at) %> · <%= h.username %></time>
-            <%= h.action %><%= h.detail ? ' — ' + h.detail : '' %>
+            <%= h.action %><%= h.detail ? ', ' + h.detail : '' %>
           </li>
         <% }) %>
         <% if (!history.length) { %><li class="muted">Nothing recorded yet.</li><% } %>

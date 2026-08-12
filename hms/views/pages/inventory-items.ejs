@@ -95,7 +95,7 @@
           <div class="field">
             <label for="supplier_id">Usual supplier</label>
             <select id="supplier_id" name="supplier_id">
-              <option value="">— none —</option>
+              <option value="">None</option>
               <% suppliers.forEach(function (s) { %>
                 <option value="<%= s.id %>" <%= editing && editing.supplier_id === s.id ? 'selected' : '' %>><%= s.name %></option>
               <% }) %>
@@ -112,7 +112,7 @@
         </div>
         <label class="check">
           <input type="checkbox" name="is_active" value="1" <%= !editing || editing.is_active ? 'checked' : '' %>>
-          <span>In use — show it on the stock list</span>
+          <span>In use, show it on the stock list</span>
         </label>
       </div>
       <div class="card__foot btn-row">

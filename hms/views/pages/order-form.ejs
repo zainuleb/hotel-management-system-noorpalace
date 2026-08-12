@@ -32,7 +32,7 @@
             <div class="field" id="room-field">
               <label for="room_choice">Room (checked-in guests only)</label>
               <select id="room_choice" name="room_choice">
-                <option value="">— choose a room —</option>
+                <option value="">Choose a room…</option>
                 <% occupied.forEach(function (r) { %>
                   <option value="<%= r.booking_id %>:<%= r.id %>"
                     <%= Number(defaults.booking_id) === r.booking_id ? 'selected' : '' %>>
@@ -84,7 +84,7 @@
                 <input type="radio" name="billing_mode" value="complimentary" data-billing
                        <%= defaults.billing_mode === 'complimentary' ? 'checked' : '' %>>
                 <strong>Complimentary</strong>
-                <small>No charge — included in the package</small>
+                <small>No charge, included in the package</small>
               </label>
             </div>
             <small class="muted">You can switch between these later from the order screen if the wrong one was picked.</small>
@@ -227,7 +227,7 @@
           return '<div class="ticket__line">' +
             '<div class="name"><strong>' + escapeHtml(l.name) + '</strong><small>' + SYMBOL + ' ' + money(l.price) + ' each</small></div>' +
             '<div class="qty">' +
-              '<button type="button" data-step="-1" data-idx="' + idx + '">−</button>' +
+              '<button type="button" data-step="-1" data-idx="' + idx + '">-</button>' +
               '<input type="number" min="1" value="' + l.qty + '" data-qty="' + idx + '">' +
               '<button type="button" data-step="1" data-idx="' + idx + '">+</button>' +
             '</div>' +

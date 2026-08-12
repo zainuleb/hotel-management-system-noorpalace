@@ -10,8 +10,8 @@ import {
 
 /**
  * Revenue is measured two ways on purpose:
- *  - "billed"   — what appears on invoices raised in the period (accrual).
- *  - "collected"— what money actually came in (cash view).
+ *  - "billed"  , what appears on invoices raised in the period (accrual).
+ *  - "collected"what money actually came in (cash view).
  * A hotel needs both: the first reconciles against the guest ledger, the second
  * against the cash drawer.
  */
@@ -115,7 +115,7 @@ export interface MealSalesRow {
 /**
  * Meal-wise sales: Breakfast vs Lunch vs Dinner.
  *
- * Order money and item counts are fetched separately — joining order_items to
+ * Order money and item counts are fetched separately, joining order_items to
  * aggregate both at once would multiply each order total by its line count.
  */
 export function salesByMeal(from: string, to: string): MealSalesRow[] {
@@ -462,7 +462,7 @@ export interface ProfitAndLoss {
   expenses_by_category: CategoryTotal[];
   income_by_category: CategoryTotal[];
   profit_minor: number;
-  /** Cash actually received in the period — for reconciling against the drawer. */
+  /** Cash actually received in the period, for reconciling against the drawer. */
   collected_minor: number;
   rooms_available: number;
   room_nights_available: number;
@@ -709,8 +709,8 @@ export interface CashBookRow {
 }
 
 /**
- * Every movement of money in one chronological list — guest payments in,
- * expenses out — with a running balance. This is the page an owner reconciles
+ * Every movement of money in one chronological list, guest payments in,
+ * expenses out, with a running balance. This is the page an owner reconciles
  * against the cash box at the end of a day or a month.
  */
 export function cashBook(from: string, to: string, mode = 'all'): CashBookRow[] {
@@ -755,7 +755,7 @@ export function cashBook(from: string, to: string, mode = 'all'): CashBookRow[] 
       direction: 'in' as const,
       source: 'payment' as const,
       reference: p.reference,
-      description: `Payment — ${p.description}`,
+      description: `Payment, ${p.description}`,
       mode: p.mode,
       amount_minor: p.amount_minor,
       link: `/invoices/${p.invoice_id}`,
@@ -767,7 +767,7 @@ export function cashBook(from: string, to: string, mode = 'all'): CashBookRow[] 
       direction: (e.kind === 'income' ? 'in' : 'out') as 'in' | 'out',
       source: (e.kind === 'income' ? 'income' : 'expense') as 'income' | 'expense',
       reference: e.reference || e.category_name,
-      description: `${e.category_name} — ${e.description}${e.paid_to ? ` (${e.paid_to})` : ''}`,
+      description: `${e.category_name}, ${e.description}${e.paid_to ? ` (${e.paid_to})` : ''}`,
       mode: e.mode,
       amount_minor: e.amount_minor,
       link: '/expenses',
@@ -824,7 +824,7 @@ export interface TaxRow {
 }
 
 /**
- * Tax charged on invoices, by month — the figures needed to file a return.
+ * Tax charged on invoices, by month, the figures needed to file a return.
  * Voided invoices are excluded because no tax was ever due on them.
  */
 export function taxReport(from: string, to: string): TaxRow[] {

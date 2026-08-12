@@ -45,7 +45,7 @@
       <div class="totals mt-1">
         <div><span>Room charges</span><span><%= fmt(draft.room_charges_minor) %></span></div>
         <div><span>Food charges</span><span><%= fmt(draft.food_charges_minor) %></span></div>
-        <% if (draft.discount_minor) { %><div><span>Discount</span><span>− <%= fmt(draft.discount_minor) %></span></div><% } %>
+        <% if (draft.discount_minor) { %><div><span>Discount</span><span>- <%= fmt(draft.discount_minor) %></span></div><% } %>
         <% if (draft.tax_minor) { %><div><span><%= hotel.tax_label %> (<%= draft.tax_percent %>%)</span><span><%= fmt(draft.tax_minor) %></span></div><% } %>
         <div class="grand"><span>Total</span><span><%= hotel.currency_symbol %> <%= fmt(draft.total_minor) %></span></div>
         <% if (draft.complimentary_minor) { %>
@@ -73,7 +73,7 @@
           <button class="btn" type="submit">Recalculate</button>
         </form>
         <small class="muted">
-          Changing the check-out date recalculates the nights charged — use it for an early departure.
+          Changing the check-out date recalculates the nights charged. Use it for an early departure.
         </small>
       </div>
     </div>

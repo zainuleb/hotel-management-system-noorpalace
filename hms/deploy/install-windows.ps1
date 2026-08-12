@@ -1,5 +1,5 @@
 <#
-  Hotel Management System — Windows installer
+  Hotel Management System, Windows installer
 
   Run this once on the PC that will host the system (usually the front desk PC).
   Right-click this file and choose "Run with PowerShell".
@@ -8,7 +8,7 @@
     1. check Node.js is present and new enough
     2. install dependencies and build the app
     3. open the Windows Firewall so other PCs and tablets on the hotel wifi
-       can reach it (needs administrator rights — it will ask)
+       can reach it (needs administrator rights. It will ask)
     4. make the system start automatically whenever this PC is switched on
     5. put a shortcut on the desktop
     6. print the addresses staff should use
@@ -34,7 +34,7 @@ function Warn($text) { Say "!   $text" 'Yellow' }
 function Die($text)  { Say "X   $text" 'Red'; Write-Host ""; Read-Host 'Press Enter to close'; exit 1 }
 
 Write-Host ""
-Write-Host "  $AppName — setup" -ForegroundColor White
+Write-Host "  $AppName setup" -ForegroundColor White
 Write-Host "  ============================================================"
 
 # --------------------------------------------------------------- 1. Node.js

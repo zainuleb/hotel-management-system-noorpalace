@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <title>KOT <%= order.code %></title>
 <style>
-  /* Kitchen Order Ticket — deliberately big type, no prices. The kitchen
+  /* Kitchen Order Ticket, deliberately big type, no prices. The kitchen
      needs to read it across a hot, badly lit room, not to know the total. */
   :root { --w: <%= settings.thermal_width_mm %>mm; }
   @page { size: var(--w) auto; margin: 0; }
@@ -47,7 +47,7 @@
 <hr>
 
 <div><%= order.code %> · <%= fmtDateTime(order.created_at) %></div>
-<div>Taken by: <%= order.created_by_name || '—' %></div>
+<div>Taken by: <%= order.created_by_name || '-' %></div>
 <% if (order.guest_full_name) { %><div>Guest: <%= order.guest_full_name %></div><% } %>
 <% if (order.order_type === 'dine_in' && order.guest_name) { %><div>Customer: <%= order.guest_name %></div><% } %>
 

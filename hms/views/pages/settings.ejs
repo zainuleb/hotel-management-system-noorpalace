@@ -30,7 +30,7 @@
         <div class="field">
           <label for="tax_percent">Tax percent</label>
           <input id="tax_percent" name="tax_percent" type="number" step="0.01" min="0" max="100" value="<%= settings.tax_percent %>">
-          <small>Applied to (room + food − discount) on every invoice.</small>
+          <small>Applied to (room + food - discount) on every invoice.</small>
         </div>
         <div class="field">
           <label for="tax_label">Tax label</label>
@@ -49,7 +49,7 @@
         <div class="field"><label for="booking_prefix">Booking prefix</label><input id="booking_prefix" name="booking_prefix" value="<%= settings.booking_prefix %>"></div>
         <div class="field"><label for="order_prefix">Order prefix</label><input id="order_prefix" name="order_prefix" value="<%= settings.order_prefix %>"></div>
       </div>
-      <p class="muted"><small>Numbers are generated automatically and can never repeat — invoices run as
+      <p class="muted"><small>Numbers are generated automatically and can never repeat, invoices run as
         <code><%= settings.invoice_prefix %>-<%= today.slice(0, 4) %>-00001</code> and restart each year.</small></p>
 
       <div class="form-grid">

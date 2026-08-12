@@ -17,7 +17,7 @@
 
 <div class="print-head" style="display:none">
   <h2><%= hotel.hotel_name %></h2>
-  <p>Year Summary — <%= year %></p>
+  <p>Year Summary, <%= year %></p>
 </div>
 
 <div class="grid grid--4" style="margin-bottom:1.1rem">
@@ -68,7 +68,7 @@
               <td class="num"><%= fmt(m.room_minor) %></td>
               <td class="num"><%= fmt(m.food_minor) %></td>
               <td class="num"><%= fmt(m.total_sale_minor) %></td>
-              <td class="num"><%= m.expense_minor ? fmt(m.expense_minor) : '—' %></td>
+              <td class="num"><%= m.expense_minor ? fmt(m.expense_minor) : '-' %></td>
               <td class="num" style="color:<%= m.profit_minor >= 0 ? 'inherit' : 'var(--bad)' %>">
                 <strong><%= fmt(m.profit_minor) %></strong>
               </td>

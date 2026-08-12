@@ -10,7 +10,7 @@ import type { PaymentMode } from '../types/domain.js';
  * Stock for the kitchen, bar, housekeeping and maintenance.
  *
  * Current stock is never stored. It is the sum of every movement against an
- * item, so any figure on screen can be explained line by line — which is the
+ * item, so any figure on screen can be explained line by line, which is the
  * whole point of keeping a stock book. Correcting a mistake means recording an
  * adjustment, not quietly editing a number, and the adjustment carries a reason
  * and the name of whoever made it.
@@ -142,7 +142,7 @@ export interface StockRow extends InventoryItem {
 
 /**
  * Items with their current stock. The `on_hand` figure is summed from the
- * movement table on every read rather than cached, which keeps it honest — a
+ * movement table on every read rather than cached, which keeps it honest, a
  * hotel's stock list is a few hundred rows, not a few million.
  */
 const STOCK_SELECT = `
@@ -196,7 +196,7 @@ export function getStockItem(id: number): StockRow | undefined {
   return row ? decorate(row) : undefined;
 }
 
-/** Items at or below their reorder level — the shopping list. */
+/** Items at or below their reorder level, the shopping list. */
 export function lowStock(): StockRow[] {
   return listStock({ low_only: true });
 }
@@ -244,7 +244,7 @@ export function deleteItem(id: number, req: Request): void {
   const movements = scalar('SELECT COUNT(*) FROM stock_movements WHERE item_id = ?', id);
   if (movements) {
     throw new ValidationError(
-      `"${item.name}" has ${movements} stock movement(s) against it. Deleting it would erase that history — switch it off instead and it will drop off the stock list.`,
+      `"${item.name}" has ${movements} stock movement(s) against it. Deleting it would erase that history, switch it off instead and it will drop off the stock list.`,
     );
   }
   run('DELETE FROM inventory_items WHERE id = ?', id);
@@ -306,7 +306,7 @@ export function recordMovement(input: MovementInput, req: Request): number {
         {
           entry_date: input.entry_date,
           category_id: category.id,
-          description: `${item.name} — ${input.qty / 1000} ${item.unit}`,
+          description: `${item.name}, ${input.qty / 1000} ${item.unit}`,
           paid_to: supplier?.name ?? '',
           amount_minor: value,
           payment_mode: input.payment_mode ?? 'cash',

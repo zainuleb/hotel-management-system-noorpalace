@@ -24,9 +24,9 @@
           <% guests.forEach(function (g) { %>
             <tr>
               <td><a href="/guests/<%= g.id %>"><strong><%= g.full_name %></strong></a></td>
-              <td><%= g.phone || '—' %></td>
-              <td><%= g.id_number || '—' %></td>
-              <td class="muted"><%= g.address || '—' %></td>
+              <td><%= g.phone || '-' %></td>
+              <td><%= g.id_number || '-' %></td>
+              <td class="muted"><%= g.address || '-' %></td>
               <td><small><%= fmtDate(g.created_at) %></small></td>
             </tr>
           <% }) %>

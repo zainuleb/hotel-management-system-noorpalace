@@ -78,7 +78,7 @@ router.post('/menu/:id/delete', requirePermission('menu.manage'), (req, res) => 
   const used = scalar('SELECT COUNT(*) FROM order_items WHERE menu_item_id = ?', id);
   if (used) {
     throw new ValidationError(
-      `"${item.name}" appears on ${used} past order, so it cannot be deleted. Mark it unavailable instead — it will disappear from the ordering screen.`,
+      `"${item.name}" appears on ${used} past order, so it cannot be deleted. Mark it unavailable instead. It will disappear from the ordering screen.`,
     );
   }
   run('DELETE FROM menu_items WHERE id = ?', id);

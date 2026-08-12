@@ -6,7 +6,7 @@ import { nowTs } from '../lib/dates.js';
 
 /**
  * Backups use SQLite's `VACUUM INTO`, which writes a consistent, already
- * compacted copy while the system keeps running — no need to stop the front
+ * compacted copy while the system keeps running. There is no need to stop the front
  * desk to take one.
  */
 

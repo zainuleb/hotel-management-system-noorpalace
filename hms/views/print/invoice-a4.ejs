@@ -108,7 +108,7 @@
   <div class="totals">
     <% if (invoice.room_charges_minor) { %><div><span>Room charges</span><span><%= fmt(invoice.room_charges_minor) %></span></div><% } %>
     <% if (invoice.food_charges_minor) { %><div><span>Food &amp; beverage</span><span><%= fmt(invoice.food_charges_minor) %></span></div><% } %>
-    <% if (invoice.discount_minor) { %><div><span>Discount</span><span>− <%= fmt(invoice.discount_minor) %></span></div><% } %>
+    <% if (invoice.discount_minor) { %><div><span>Discount</span><span>- <%= fmt(invoice.discount_minor) %></span></div><% } %>
     <% if (invoice.tax_minor) { %><div><span><%= settings.tax_label %> (<%= invoice.tax_percent %>%)</span><span><%= fmt(invoice.tax_minor) %></span></div><% } %>
     <div class="grand"><span>Total</span><span><%= settings.currency_symbol %> <%= fmt(invoice.total_minor) %></span></div>
     <div><span>Paid</span><span><%= fmt(paid) %></span></div>
@@ -126,7 +126,7 @@
           <tr>
             <td><%= fmtDateTime(p.created_at) %></td>
             <td><%= domain.PAYMENT_MODE_LABELS[p.mode] %></td>
-            <td><%= p.reference || '—' %></td>
+            <td><%= p.reference || '-' %></td>
             <td style="text-align:right"><%= fmt(p.amount_minor) %></td>
           </tr>
         <% }) %>

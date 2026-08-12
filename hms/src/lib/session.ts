@@ -63,7 +63,7 @@ export function purgeExpiredSessions(): void {
   run(`DELETE FROM sessions WHERE expires_at < ?`, nowTs());
 }
 
-/** Signs every session belonging to a user out — used when a login is disabled. */
+/** Signs every session belonging to a user out, used when a login is disabled. */
 export function destroyUserSessions(userId: number): void {
   run('DELETE FROM sessions WHERE user_id = ?', userId);
 }
@@ -73,7 +73,7 @@ export function activeSessionCount(userId: number): number {
 }
 
 /**
- * Minimal cookie parser — avoids pulling in cookie-parser for two cookies.
+ * Minimal cookie parser, avoids pulling in cookie-parser for two cookies.
  */
 export function cookies(req: Request, _res: Response, next: NextFunction): void {
   const header = req.headers.cookie;
@@ -135,7 +135,7 @@ export function loadSession(req: Request, res: Response, next: NextFunction): vo
       const parsed: unknown = JSON.parse(raw);
       if (Array.isArray(parsed)) flashes = parsed as { type: string; message: string }[];
     } catch {
-      /* malformed cookie — ignore */
+      /* malformed cookie, ignore */
     }
     res.clearCookie(FLASH_COOKIE, { path: '/' });
   }

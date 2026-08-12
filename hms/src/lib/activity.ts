@@ -4,7 +4,7 @@ import { nowTs } from './dates.js';
 
 /**
  * Audit trail. The proposal asks for "who created/edited/cancelled a booking or
- * bill", so every state change calls this. Reads are not logged — that would
+ * bill", so every state change calls this. Reads are not logged. That would
  * bury the entries that matter.
  */
 export function logActivity(

@@ -29,7 +29,7 @@ export function formatMinor(minor: number): string {
   return `${negative ? '-' : ''}${grouped}.${decimals}`;
 }
 
-/** 125050 -> "1250.50" — for pre-filling number inputs. */
+/** 125050 -> "1250.50", for pre-filling number inputs. */
 export function toInputValue(minor: number): string {
   return toMajor(minor ?? 0).toFixed(2);
 }

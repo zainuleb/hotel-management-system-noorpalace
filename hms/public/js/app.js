@@ -19,7 +19,7 @@
       e.preventDefault();
       return;
     }
-    // Stop double submits — a second click must not create a second booking.
+    // Stop double submits: a second click must not create a second booking.
     var submitters = form.querySelectorAll('button[type=submit]');
     if (!form.hasAttribute('data-allow-resubmit')) {
       setTimeout(function () {

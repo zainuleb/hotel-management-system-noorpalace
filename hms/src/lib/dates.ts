@@ -85,7 +85,7 @@ export function rangesOverlap(aFrom: string, aTo: string, bFrom: string, bTo: st
 /** '2026-08-10' -> '10 Aug 2026' */
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 export function formatDate(value: string | null | undefined): string {
-  if (!value) return '—';
+  if (!value) return '-';
   const d = parseDate(value.slice(0, 10));
   if (!d) return String(value);
   return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
@@ -93,7 +93,7 @@ export function formatDate(value: string | null | undefined): string {
 
 /** '2026-08-10 14:05:00' -> '10 Aug 2026, 02:05 PM' */
 export function formatDateTime(value: string | null | undefined): string {
-  if (!value) return '—';
+  if (!value) return '-';
   const datePart = formatDate(value.slice(0, 10));
   const time = value.slice(11, 16);
   if (!time) return datePart;
@@ -112,7 +112,7 @@ export function monthRange(dateStr: string): { start: string; end: string } {
   return { start: toDateString(start), end: toDateString(end) };
 }
 
-/** Meal that a given time of day most likely belongs to — used to pre-select. */
+/** Meal that a given time of day most likely belongs to, used to pre-select. */
 export function currentMealType(): 'breakfast' | 'lunch' | 'dinner' {
   const h = new Date().getHours();
   if (h < 11) return 'breakfast';

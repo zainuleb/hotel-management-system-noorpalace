@@ -29,7 +29,7 @@
             <% if (can('guests.manage')) { %>
               <%- include('../partials/country-select', { name: 'nationality', value: guest.nationality }) %>
             <% } else { %>
-              <input value="<%= guest.nationality || '—' %>" readonly>
+              <input value="<%= guest.nationality || '-' %>" readonly>
             <% } %>
           </div>
           <div class="field span-2">
@@ -64,7 +64,7 @@
               <% stays.forEach(function (b) { %>
                 <tr>
                   <td><a href="/bookings/<%= b.id %>"><%= b.code %></a></td>
-                  <td><%= b.room_numbers || '—' %></td>
+                  <td><%= b.room_numbers || '-' %></td>
                   <td class="nowrap"><small><%= fmtDate(b.arrival_date) %> → <%= fmtDate(b.departure_date) %></small></td>
                   <td><span class="badge"><%= domain.BOOKING_STATUS_LABELS[b.status] %></span></td>
                 </tr>

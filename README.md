@@ -1,11 +1,11 @@
-# Hotel Management System — Hotel Noor Palace
+# Hotel Management System: Hotel Noor Palace
 
 Room booking, restaurant service, combined billing, expenses and profit reporting
 for a single hotel property.
 
 It runs on **one Windows PC** on the hotel's own wifi. Reception, the kitchen,
 waiters on tablets and the accountant all use it through an ordinary browser.
-**No internet connection is required** — nothing leaves the building.
+**No internet connection is required**. Nothing leaves the building.
 
 The application lives in [`hms/`](hms). Start there:
 
@@ -24,7 +24,7 @@ npm run build
 npm start          # http://localhost:8080
 ```
 
-The first person to open it completes a short setup wizard — hotel details, tax
+The first person to open it completes a short setup wizard, hotel details, tax
 rate, and the administrator login. There is no default password anywhere in the
 system.
 
@@ -40,7 +40,7 @@ journey from setup to a paid invoice and on to the monthly profit figure.
 
 ## The hotel
 
-18 rooms — 101 to 108 on the ground floor, 201 to 210 on the first. The setup
+18 rooms, 101 to 108 on the ground floor, 201 to 210 on the first. The setup
 wizard can create them, with placeholder rates to be replaced by the real tariff.
 
 ## Licence

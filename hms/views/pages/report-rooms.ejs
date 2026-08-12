@@ -42,11 +42,11 @@
           <% rows.forEach(function (r) { %>
             <tr>
               <td><strong><%= r.room_number %></strong></td>
-              <td><%= r.floor || '—' %></td>
+              <td><%= r.floor || '-' %></td>
               <td><%= r.type_name %></td>
               <td class="num"><%= r.nights_sold %></td>
               <td class="num"><%= r.occupancy_percent %>%</td>
-              <td class="num"><%= r.nights_sold ? fmt(r.average_rate_minor) : '—' %></td>
+              <td class="num"><%= r.nights_sold ? fmt(r.average_rate_minor) : '-' %></td>
               <td class="num"><%= fmt(r.room_revenue_minor) %></td>
               <td class="num"><%= fmt(r.food_revenue_minor) %></td>
               <td class="num"><strong><%= fmt(r.total_revenue_minor) %></strong></td>

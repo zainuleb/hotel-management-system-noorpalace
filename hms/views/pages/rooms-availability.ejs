@@ -44,9 +44,9 @@
             <tr>
               <td><strong><%= room.number %></strong></td>
               <td><%= room.type_name %></td>
-              <td><%= room.floor || '—' %></td>
+              <td><%= room.floor || '-' %></td>
               <td class="num"><%= room.capacity || room.type_capacity %></td>
-              <td class="muted"><%= room.amenities || '—' %></td>
+              <td class="muted"><%= room.amenities || '-' %></td>
               <td class="num"><%= hotel.currency_symbol %> <%= fmt(room.base_rate) %></td>
               <td class="right">
                 <% if (can('bookings.create')) { %>

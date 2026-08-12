@@ -262,7 +262,7 @@ export function settleFoodOrder(orderId: number, input: SettleOrderInput, req: R
     if (order.status === 'cancelled') throw new ValidationError(`Order ${order.code} was cancelled.`);
     if (order.billing_mode === 'add_to_room') {
       throw new ValidationError(
-        `Order ${order.code} is charged to a room — it will be billed when the guest checks out.`,
+        `Order ${order.code} is charged to a room. It will be billed when the guest checks out.`,
       );
     }
 

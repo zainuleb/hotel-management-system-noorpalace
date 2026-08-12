@@ -1,12 +1,12 @@
 /**
- * Fills a running system with realistic demo data — useful for showing the
+ * Fills a running system with realistic demo data, useful for showing the
  * software to a customer before their real rooms and menu are entered.
  *
  *   1. Start the system          npm start
  *   2. Finish the setup wizard in the browser (tick "add example rooms")
  *   3. node scripts/demo-data.mjs --user ahsan --password yourpassword
  *
- * Everything it creates is ordinary data — delete it, or just restore a backup
+ * Everything it creates is ordinary data, delete it, or just restore a backup
  * taken before running this, to get back to an empty system.
  */
 const args = new Map();
@@ -75,7 +75,7 @@ if (login.location === '/account/password') {
   process.exit(1);
 }
 if (!jar.has('hms_sid')) {
-  console.error('Could not sign in — check the username and password.');
+  console.error('Could not sign in. Check the username and password.');
   process.exit(1);
 }
 console.log(`Signed in to ${BASE} as ${USER}`);

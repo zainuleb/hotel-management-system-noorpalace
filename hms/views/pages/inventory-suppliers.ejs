@@ -19,8 +19,8 @@
               <tr>
                 <td><strong><%= s.name %></strong>
                   <% if (s.address) { %><br><small class="muted"><%= s.address %></small><% } %></td>
-                <td><%= s.contact || '—' %></td>
-                <td><%= s.phone || '—' %></td>
+                <td><%= s.contact || '-' %></td>
+                <td><%= s.phone || '-' %></td>
                 <td><span class="badge badge--<%= s.is_active ? 'ok' : '' %>"><%= s.is_active ? 'Active' : 'Switched off' %></span></td>
                 <td class="right nowrap">
                   <a class="btn btn--sm" href="/inventory/suppliers?edit=<%= s.id %>">Edit</a>
@@ -68,7 +68,7 @@
         </div>
         <label class="check">
           <input type="checkbox" name="is_active" value="1" <%= !editing || editing.is_active ? 'checked' : '' %>>
-          <span>Active — offer them when recording a purchase</span>
+          <span>Active, offer them when recording a purchase</span>
         </label>
       </div>
       <div class="card__foot btn-row">
