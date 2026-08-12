@@ -37,6 +37,7 @@
 </div>
 
 <div class="center">
+  <div class="lg"><%= settings.hotel_name %></div>
   <div class="lg">KITCHEN ORDER</div>
   <div class="xl">
     <%= order.order_type === 'room_service' ? 'ROOM ' + (order.room_number || '?') : 'TABLE ' + (order.table_no || '?') %>

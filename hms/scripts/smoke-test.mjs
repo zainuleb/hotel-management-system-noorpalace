@@ -213,6 +213,7 @@ try {
 
   const kot = await GET(`/orders/${orderId}/kot`);
   check('KOT prints without prices', kot.status === 200 && kot.text.includes('KITCHEN ORDER') && !kot.text.includes('TOTAL'));
+  check('KOT carries the hotel name', kot.text.includes('Smoke Test Hotel'));
 
   /* An order cannot be charged to a room with nobody in it. */
   const badCharge = await POST('/orders', {
@@ -247,6 +248,11 @@ try {
 
   const receipt = await GET(`/invoices/${invoice2Id}/receipt`);
   check('thermal receipt renders', receipt.status === 200 && receipt.text.includes('SALE RECEIPT'));
+
+  /* Every printed document must be identifiable as this hotel's. */
+  check('the thermal receipt carries the hotel name', receipt.text.includes('Smoke Test Hotel'));
+  const a4Receipt = await GET(`/invoices/${invoice2Id}/print`);
+  check('the A4 invoice carries the hotel name', a4Receipt.text.includes('Smoke Test Hotel'));
 
   /* Switching an order's billing after it was placed. No approval needed. */
   const order3 = await POST('/orders', {
