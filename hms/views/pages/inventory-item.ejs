@@ -1,0 +1,102 @@
+<%- include('../partials/head', { heading: item.name }) %>
+
+<div class="btn-row" style="margin-bottom:1rem">
+  <% if (item.on_hand <= 0) { %>
+    <span class="badge badge--bad" style="font-size:.85rem;padding:.3rem .7rem">Out of stock</span>
+  <% } else if (item.is_low) { %>
+    <span class="badge badge--warn" style="font-size:.85rem;padding:.3rem .7rem">Low — reorder</span>
+  <% } else { %>
+    <span class="badge badge--ok" style="font-size:.85rem;padding:.3rem .7rem">In stock</span>
+  <% } %>
+  <% if (can('inventory.manage')) { %>
+    <a class="btn btn--primary" href="/inventory/movements?item_id=<%= item.id %>&record=purchase">Record purchase</a>
+    <a class="btn" href="/inventory/movements?item_id=<%= item.id %>&record=issue">Issue out</a>
+    <a class="btn" href="/inventory/movements?item_id=<%= item.id %>&record=adjustment">Stock-take fix</a>
+    <a class="btn" href="/inventory/items?edit=<%= item.id %>">Edit item</a>
+  <% } %>
+  <a class="btn" href="/inventory">Back to stock</a>
+</div>
+
+<div class="grid grid--4" style="margin-bottom:1.1rem">
+  <div class="stat stat--brand">
+    <div class="stat__label">On hand</div>
+    <div class="stat__value"><%= qty(item.on_hand) %> <span style="font-size:1rem"><%= item.unit %></span></div>
+    <div class="stat__meta">Reorder at <%= item.reorder_level ? qty(item.reorder_level) + ' ' + item.unit : 'not set' %></div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Stock value</div>
+    <div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(item.value_minor) %></div>
+    <div class="stat__meta">at <%= fmt(item.cost_minor) %> per <%= item.unit %></div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Category</div>
+    <div class="stat__value" style="font-size:1.1rem"><%= categoryLabels[item.category] %></div>
+    <div class="stat__meta"><%= item.location || 'no store location set' %></div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Usual supplier</div>
+    <div class="stat__value" style="font-size:1.1rem"><%= item.supplier_name || '—' %></div>
+    <div class="stat__meta">Last moved <%= item.last_movement ? fmtDate(item.last_movement) : 'never' %></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card__head">
+    <h2>Everything that has happened to this item</h2>
+    <div class="spacer"></div>
+    <span class="badge"><%= movements.length %> entries</span>
+  </div>
+  <div class="card__body card__body--flush table-wrap">
+    <% if (!movements.length) { %>
+      <div class="table-empty">Nothing recorded yet.</div>
+    <% } else { %>
+      <%
+        /* Running balance is built oldest-first so the newest row on screen
+           shows the figure that is on the shelf today. */
+        var ordered = movements.slice().reverse();
+        var running = 0;
+        var withBalance = ordered.map(function (m) {
+          running += m.qty_change;
+          return Object.assign({}, m, { balance: running });
+        }).reverse();
+      %>
+      <table class="data">
+        <thead>
+          <tr><th>Date</th><th>Type</th><th class="num">Change</th><th class="num">Balance</th>
+              <th class="num">Value</th><th>Who / note</th></tr>
+        </thead>
+        <tbody>
+          <% withBalance.forEach(function (m) { %>
+            <tr>
+              <td class="nowrap"><small><%= fmtDate(m.entry_date) %></small></td>
+              <td>
+                <% var tone = m.qty_change > 0 ? 'ok' : (m.kind === 'wastage' ? 'bad' : 'info'); %>
+                <span class="badge badge--<%= tone %>"><%= kindLabels[m.kind] %></span>
+              </td>
+              <td class="num" style="color:<%= m.qty_change > 0 ? 'var(--ok)' : 'var(--bad)' %>">
+                <strong><%= m.qty_change > 0 ? '+' : '' %><%= qty(m.qty_change) %></strong>
+              </td>
+              <td class="num"><%= qty(m.balance) %> <small class="muted"><%= item.unit %></small></td>
+              <td class="num"><%= fmt(m.value_minor) %></td>
+              <td>
+                <small class="muted"><%= m.created_by_name || '—' %></small>
+                <% if (m.note) { %><br><small><%= m.note %></small><% } %>
+                <% if (m.supplier_name) { %><br><small class="muted"><%= m.supplier_name %><%= m.reference ? ' · ' + m.reference : '' %></small><% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+  <div class="card__foot">
+    <small class="muted">The stock figure is never edited directly — it is the sum of these rows. That is why
+      a miscount is corrected with a stock-take adjustment, which leaves a record of who changed what and why.</small>
+  </div>
+</div>
+
+<% if (item.notes) { %>
+  <div class="card"><div class="card__body"><strong>Notes:</strong> <%= item.notes %></div></div>
+<% } %>
+
+<%- include('../partials/foot') %>

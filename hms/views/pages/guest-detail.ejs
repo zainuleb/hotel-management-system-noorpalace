@@ -12,8 +12,9 @@
             <input id="full_name" name="full_name" value="<%= guest.full_name %>" <%= can('guests.manage') ? '' : 'readonly' %> required>
           </div>
           <div class="field">
-            <label for="id_number">CNIC / Passport</label>
-            <input id="id_number" name="id_number" value="<%= guest.id_number %>" <%= can('guests.manage') ? '' : 'readonly' %>>
+            <label for="id_number">ID number</label>
+            <input id="id_number" name="id_number" value="<%= guest.id_number %>"
+                   placeholder="CNIC, passport, or any other ID" <%= can('guests.manage') ? '' : 'readonly' %>>
           </div>
           <div class="field">
             <label for="phone">Phone</label>
@@ -25,7 +26,11 @@
           </div>
           <div class="field">
             <label for="nationality">Nationality</label>
-            <input id="nationality" name="nationality" value="<%= guest.nationality %>" <%= can('guests.manage') ? '' : 'readonly' %>>
+            <% if (can('guests.manage')) { %>
+              <%- include('../partials/country-select', { name: 'nationality', value: guest.nationality }) %>
+            <% } else { %>
+              <input value="<%= guest.nationality || '—' %>" readonly>
+            <% } %>
           </div>
           <div class="field span-2">
             <label for="address">Address</label>

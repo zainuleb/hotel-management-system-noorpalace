@@ -1,0 +1,266 @@
+<%- include('../partials/head', { heading: 'Stock Movements' }) %>
+
+<div class="grid grid--2 grid--wide">
+  <div>
+    <div class="card">
+      <div class="card__body">
+        <form class="filters" method="get" action="/inventory/movements">
+          <div class="field"><label for="from">From</label><input id="from" name="from" type="date" value="<%= from %>"></div>
+          <div class="field"><label for="to">To</label><input id="to" name="to" type="date" value="<%= to %>"></div>
+          <div class="field">
+            <label for="kind">Type</label>
+            <select id="kind" name="kind" data-auto-submit>
+              <option value="all" <%= kind === 'all' ? 'selected' : '' %>>All types</option>
+              <% kinds.forEach(function (k) { %>
+                <option value="<%= k %>" <%= kind === k ? 'selected' : '' %>><%= kindLabels[k] %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="field">
+            <label for="item_id">Item</label>
+            <select id="item_id" name="item_id" data-auto-submit>
+              <option value="0">All items</option>
+              <% items.forEach(function (i) { %>
+                <option value="<%= i.id %>" <%= itemId === i.id ? 'selected' : '' %>><%= i.name %></option>
+              <% }) %>
+            </select>
+          </div>
+          <button class="btn btn--primary" type="submit">Filter</button>
+          <a class="btn" href="/inventory/export.csv?report=movements&from=<%= from %>&to=<%= to %>">CSV</a>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card__head"><h2><%= movements.length %> entries</h2></div>
+      <div class="card__body card__body--flush table-wrap">
+        <% if (!movements.length) { %>
+          <div class="table-empty">No stock moved in this period.</div>
+        <% } else { %>
+          <table class="data">
+            <thead>
+              <tr><th>Date</th><th>Item</th><th>Type</th><th class="num">Qty</th><th class="num">Value</th><th>Who / note</th><th></th></tr>
+            </thead>
+            <tbody>
+              <% movements.forEach(function (m) { %>
+                <tr>
+                  <td class="nowrap"><small><%= fmtDate(m.entry_date) %></small></td>
+                  <td><a href="/inventory/items/<%= m.item_id %>"><%= m.item_name %></a></td>
+                  <td>
+                    <% var tone = m.qty_change > 0 ? 'ok' : (m.kind === 'wastage' ? 'bad' : 'info'); %>
+                    <span class="badge badge--<%= tone %>"><%= kindLabels[m.kind] %></span>
+                  </td>
+                  <td class="num">
+                    <strong style="color:<%= m.qty_change > 0 ? 'var(--ok)' : 'var(--bad)' %>">
+                      <%= m.qty_change > 0 ? '+' : '' %><%= qty(m.qty_change) %>
+                    </strong>
+                    <small class="muted"><%= m.unit %></small>
+                  </td>
+                  <td class="num"><%= fmt(m.value_minor) %></td>
+                  <td>
+                    <small class="muted"><%= m.created_by_name || '—' %></small>
+                    <% if (m.note) { %><br><small><%= m.note %></small><% } %>
+                    <% if (m.supplier_name) { %><br><small class="muted"><%= m.supplier_name %><%= m.reference ? ' · ' + m.reference : '' %></small><% } %>
+                    <% if (m.expense_id) { %><br><small class="badge badge--brand">posted to expenses</small><% } %>
+                  </td>
+                  <td class="right">
+                    <% if (can('inventory.manage') && !m.expense_id) { %>
+                      <form method="post" action="/inventory/movements/<%= m.id %>/delete"
+                            data-confirm="Remove this stock entry? The item's stock figure will change.">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button class="btn btn--sm btn--danger" type="submit">Remove</button>
+                      </form>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <% if (can('inventory.manage')) { %>
+    <div>
+      <div class="card">
+        <div class="card__head"><h2>Record a stock entry</h2></div>
+        <form method="post" action="/inventory/movements" id="movement-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="filter_from" value="<%= from %>">
+          <input type="hidden" name="filter_to" value="<%= to %>">
+          <div class="card__body">
+            <div class="field">
+              <label class="field-label">What is happening?</label>
+              <div class="radio-cards">
+                <% [['purchase','Stock came in','Bought from a supplier'],
+                    ['issue','Stock went out','Taken by the kitchen or housekeeping'],
+                    ['wastage','Wastage','Spoiled, broken or expired']].forEach(function (k) { %>
+                  <label class="radio-card">
+                    <input type="radio" name="kind" value="<%= k[0] %>" data-kind
+                           <%= preselect.kind === k[0] ? 'checked' : '' %>>
+                    <strong><%= k[1] %></strong><small><%= k[2] %></small>
+                  </label>
+                <% }) %>
+              </div>
+              <div class="radio-cards mt-1">
+                <% [['opening','Opening stock','What was already on the shelf'],
+                    ['adjustment','Stock-take fix','After counting the shelf'],
+                    ['return','Returned to supplier','Sent back']].forEach(function (k) { %>
+                  <label class="radio-card">
+                    <input type="radio" name="kind" value="<%= k[0] %>" data-kind
+                           <%= preselect.kind === k[0] ? 'checked' : '' %>>
+                    <strong><%= k[1] %></strong><small><%= k[2] %></small>
+                  </label>
+                <% }) %>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="field">
+                <label for="entry_date">Date</label>
+                <input id="entry_date" name="entry_date" type="date" value="<%= today %>" required>
+              </div>
+              <div class="field">
+                <label for="m-item">Item</label>
+                <select id="m-item" name="item_id" required>
+                  <option value="">— choose an item —</option>
+                  <% items.forEach(function (i) { %>
+                    <option value="<%= i.id %>" data-unit="<%= i.unit %>" data-cost="<%= (i.cost_minor / 100).toFixed(2) %>"
+                            data-onhand="<%= qty(i.on_hand) %>" <%= preselect.item_id === i.id ? 'selected' : '' %>>
+                      <%= i.name %> (<%= qty(i.on_hand) %> <%= i.unit %> on hand)
+                    </option>
+                  <% }) %>
+                </select>
+              </div>
+            </div>
+
+            <div class="field hidden" id="adjust-direction">
+              <label class="field-label">The shelf has…</label>
+              <div class="radio-cards">
+                <label class="radio-card">
+                  <input type="radio" name="adjustment_direction" value="loss" checked>
+                  <strong>Less than the book says</strong><small>Take the difference off</small>
+                </label>
+                <label class="radio-card">
+                  <input type="radio" name="adjustment_direction" value="gain">
+                  <strong>More than the book says</strong><small>Add the difference on</small>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="field">
+                <label for="qty">Quantity <span class="muted" id="unit-hint"></span></label>
+                <input id="qty" name="qty" type="number" step="0.001" min="0.001" required>
+                <small id="onhand-hint" class="muted"></small>
+              </div>
+              <div class="field">
+                <label for="unit_cost">Unit cost</label>
+                <input id="unit_cost" name="unit_cost" type="number" step="0.01" min="0">
+                <small>Blank uses the item's last known cost.</small>
+              </div>
+            </div>
+
+            <div id="purchase-fields">
+              <div class="form-grid">
+                <div class="field">
+                  <label for="supplier_id">Supplier</label>
+                  <select id="supplier_id" name="supplier_id">
+                    <option value="">— not stated —</option>
+                    <% suppliers.forEach(function (s) { %>
+                      <option value="<%= s.id %>"><%= s.name %></option>
+                    <% }) %>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="reference">Bill / voucher no.</label>
+                  <input id="reference" name="reference">
+                </div>
+              </div>
+
+              <label class="check">
+                <input type="checkbox" name="post_to_expenses" value="1" id="post-expense" checked>
+                <span>
+                  <strong>Also record this as an expense</strong>
+                  <small class="muted">Keeps the profit figures right without typing the same bill twice.</small>
+                </span>
+              </label>
+
+              <div class="form-grid" id="expense-fields">
+                <div class="field">
+                  <label for="expense_category_id">Expense heading</label>
+                  <select id="expense_category_id" name="expense_category_id">
+                    <% expenseCategories.forEach(function (c) { %>
+                      <option value="<%= c.id %>" <%= c.name === 'Kitchen Expense' ? 'selected' : '' %>><%= c.name %></option>
+                    <% }) %>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="payment_mode">Paid by</label>
+                  <select id="payment_mode" name="payment_mode">
+                    <% paymentModes.forEach(function (m) { %>
+                      <option value="<%= m %>"><%= domain.PAYMENT_MODE_LABELS[m] %></option>
+                    <% }) %>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="note">Note</label>
+              <input id="note" name="note" placeholder="e.g. taken for tonight's dinner service">
+            </div>
+          </div>
+          <div class="card__foot">
+            <button class="btn btn--primary btn--lg btn--block" type="submit">Record entry</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  <% } %>
+</div>
+
+<script>
+  (function () {
+    var item = document.getElementById('m-item');
+    if (!item) return;
+    var qtyInput = document.getElementById('qty');
+    var cost = document.getElementById('unit_cost');
+
+    function kind() {
+      var checked = document.querySelector('[data-kind]:checked');
+      return checked ? checked.value : 'purchase';
+    }
+
+    function sync() {
+      var opt = item.selectedOptions[0];
+      var unit = opt && opt.dataset.unit ? opt.dataset.unit : '';
+      var onHand = opt && opt.dataset.onhand ? opt.dataset.onhand : null;
+
+      document.getElementById('unit-hint').textContent = unit ? '(' + unit + ')' : '';
+      document.getElementById('onhand-hint').textContent =
+        onHand !== null ? onHand + ' ' + unit + ' currently on hand' : '';
+
+      var k = kind();
+      var isPurchase = k === 'purchase';
+      document.getElementById('purchase-fields').classList.toggle('hidden', !isPurchase);
+      document.getElementById('adjust-direction').classList.toggle('hidden', k !== 'adjustment');
+
+      // Only a purchase both costs money and needs a supplier on it.
+      var post = document.getElementById('post-expense');
+      document.getElementById('expense-fields').classList.toggle('hidden', !isPurchase || !post.checked);
+
+      if (!cost.value && opt && opt.dataset.cost) cost.value = opt.dataset.cost;
+      qtyInput.max = (k === 'issue' || k === 'wastage' || k === 'return') && onHand !== null ? onHand : '';
+    }
+
+    item.addEventListener('change', sync);
+    document.addEventListener('change', function (e) {
+      if (e.target.matches('[data-kind], #post-expense')) sync();
+    });
+    sync();
+  })();
+</script>
+
+<%- include('../partials/foot') %>

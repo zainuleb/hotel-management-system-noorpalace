@@ -45,6 +45,12 @@
       <% link('/orders/kitchen', 'Kitchen Queue', '👨‍🍳', 'orders.view') %>
       <% link('/menu', 'Menu', '📋', 'menu.view') %>
 
+      <div class="nav__group">Stock</div>
+      <% link('/inventory', 'Inventory', '📦', 'inventory.view', true) %>
+      <% link('/inventory/movements', 'Stock Movements', '🔄', 'inventory.view') %>
+      <% link('/inventory/items', 'Stock Items', '🏷', 'inventory.manage', true) %>
+      <% link('/inventory/suppliers', 'Suppliers', '🚚', 'inventory.manage') %>
+
       <div class="nav__group">Money</div>
       <% link('/invoices', 'Invoices', '🧾', 'billing.view') %>
       <% link('/billing/outstanding', 'Outstanding', '⚠', 'billing.view') %>

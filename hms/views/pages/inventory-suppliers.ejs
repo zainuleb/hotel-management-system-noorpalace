@@ -1,0 +1,82 @@
+<%- include('../partials/head', { heading: 'Suppliers' }) %>
+
+<div class="grid grid--2 grid--wide">
+  <div class="card">
+    <div class="card__head">
+      <h2><%= suppliers.length %> supplier(s)</h2>
+      <div class="spacer"></div>
+      <a class="btn btn--sm" href="/inventory">Stock list</a>
+      <a class="btn btn--sm" href="/inventory/items">Items</a>
+    </div>
+    <div class="card__body card__body--flush table-wrap">
+      <% if (!suppliers.length) { %>
+        <div class="table-empty">No suppliers yet.</div>
+      <% } else { %>
+        <table class="data">
+          <thead><tr><th>Name</th><th>Contact</th><th>Phone</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            <% suppliers.forEach(function (s) { %>
+              <tr>
+                <td><strong><%= s.name %></strong>
+                  <% if (s.address) { %><br><small class="muted"><%= s.address %></small><% } %></td>
+                <td><%= s.contact || '—' %></td>
+                <td><%= s.phone || '—' %></td>
+                <td><span class="badge badge--<%= s.is_active ? 'ok' : '' %>"><%= s.is_active ? 'Active' : 'Switched off' %></span></td>
+                <td class="right nowrap">
+                  <a class="btn btn--sm" href="/inventory/suppliers?edit=<%= s.id %>">Edit</a>
+                  <form method="post" action="/inventory/suppliers/<%= s.id %>/delete" style="display:inline"
+                        data-confirm="Delete &quot;<%= s.name %>&quot;?">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button class="btn btn--sm btn--danger" type="submit">Delete</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__head"><h2><%= editing ? 'Edit "' + editing.name + '"' : 'Add a supplier' %></h2></div>
+    <form method="post" action="/inventory/suppliers">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="id" value="<%= editing ? editing.id : '' %>">
+      <div class="card__body">
+        <div class="field">
+          <label for="name">Supplier name</label>
+          <input id="name" name="name" value="<%= editing ? editing.name : '' %>" placeholder="e.g. Akbari Mandi" required>
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="contact">Contact person</label>
+            <input id="contact" name="contact" value="<%= editing ? editing.contact : '' %>">
+          </div>
+          <div class="field">
+            <label for="phone">Phone</label>
+            <input id="phone" name="phone" value="<%= editing ? editing.phone : '' %>">
+          </div>
+        </div>
+        <div class="field">
+          <label for="address">Address</label>
+          <input id="address" name="address" value="<%= editing ? editing.address : '' %>">
+        </div>
+        <div class="field">
+          <label for="notes">Notes</label>
+          <input id="notes" name="notes" value="<%= editing ? editing.notes : '' %>" placeholder="Delivery days, credit terms…">
+        </div>
+        <label class="check">
+          <input type="checkbox" name="is_active" value="1" <%= !editing || editing.is_active ? 'checked' : '' %>>
+          <span>Active — offer them when recording a purchase</span>
+        </label>
+      </div>
+      <div class="card__foot btn-row">
+        <button class="btn btn--primary" type="submit"><%= editing ? 'Save changes' : 'Add supplier' %></button>
+        <% if (editing) { %><a class="btn" href="/inventory/suppliers">Cancel</a><% } %>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

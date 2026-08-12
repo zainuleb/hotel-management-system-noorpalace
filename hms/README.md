@@ -41,6 +41,7 @@ Full instructions, including printers and daily use, are in
 | **Monthly report** | Total sale, expenses broken down by category, net profit or loss, occupancy, average room rate, and a day-by-day table. Printable |
 | **Admin dashboard** | Owner's console — sale, expenses, profit and occupancy against the previous period, cash position, what needs attention, quick expense entry, best rooms, recent activity |
 | **Reports** | Hub of eight: daily, monthly, year summary, sales & occupancy, room-wise performance, cash book, tax collected, outstanding. Printable, most export to CSV |
+| **Inventory** | Stock for kitchen, bar, housekeeping, linen and maintenance. Suppliers, reorder levels, purchases that post straight to the expense ledger, issues, wastage and stock-take adjustments, low-stock alerts, valuation and full movement history |
 | **Data** | Single-file SQLite database, automatic daily backups, one-click backup, restore with a safety copy |
 
 ---
@@ -64,7 +65,14 @@ Full instructions, including printers and daily use, are in
 * Profit figures **exclude tax**. Tax collected on a guest's behalf is not the
   hotel's income, so counting it would overstate profit.
 * A mid-stay room change splits the stay into segments, so the guest is charged
-  the right rate for the nights spent in each room.
+  the right rate for the nights spent in each room. Meals stay attached to the
+  room they were delivered to, and still land on the one bill at check-out.
+* Stock quantities are integers in **thousandths of a unit**, for the same
+  reason money is in paisa. Stock on hand is never stored — it is summed from
+  the movement table, so every figure can be explained line by line and a
+  miscount is corrected with a recorded adjustment rather than an edit.
+* A room that is taken cannot be booked. The form shows it greyed out with who
+  holds it and until when, rather than hiding it and leaving staff guessing.
 
 ---
 
@@ -92,11 +100,12 @@ Useful environment variables:
 npm run build && node scripts/smoke-test.mjs
 ```
 
-70 checks run against a real server and a throwaway database, covering the whole
+98 checks run against a real server and a throwaway database, covering the whole
 journey from setup to a paid invoice and on to the monthly profit figure, plus
 the rules that must hold (no double booking, no charging food to an empty room,
-no overpaying an invoice, no deleting a category that has entries against it,
-waiters locked out of reports and expenses).
+no overpaying an invoice, no taking stock below zero, no deleting a category or
+stock item that has history against it, and waiters locked out of reports,
+expenses and stock management).
 
 ### Demo data for showing a customer
 

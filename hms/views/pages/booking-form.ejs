@@ -23,12 +23,16 @@
             <option value="">— choose a room —</option>
             <% rooms.forEach(function (r) { %>
               <option value="<%= r.id %>" data-rate="<%= (r.base_rate / 100).toFixed(2) %>"
-                <%= Number(form.room_id) === r.id ? 'selected' : '' %>>
-                <%= r.number %> · <%= r.type_name %> · <%= hotel.currency_symbol %> <%= fmt(r.base_rate) %>
+                <%= r.available ? '' : 'disabled' %>
+                <%= r.available && Number(form.room_id) === r.id ? 'selected' : '' %>>
+                <%= r.number %> · <%= r.type_name %> · <%= hotel.currency_symbol %> <%= fmt(r.base_rate) %><%= r.available ? '' : ' — ' + r.blocked_reason %>
               </option>
             <% }) %>
           </select>
-          <small id="room-hint" class="muted">Only rooms free for the whole stay are listed.</small>
+          <small id="room-hint" class="muted">
+            <%= rooms.filter(function (r) { return r.available; }).length %> of <%= rooms.length %> rooms free for these dates.
+            Greyed-out rooms are taken — the reason is shown beside each one.
+          </small>
         </div>
         <div class="field">
           <label for="rate_minor">Rate per night</label>
@@ -74,8 +78,10 @@
           <small>Start typing — if this guest has stayed before, pick them to reuse their record.</small>
         </div>
         <div class="field">
-          <label for="id_number">CNIC / Passport</label>
-          <input id="id_number" name="id_number" value="<%= guest ? guest.id_number : '' %>">
+          <label for="id_number">ID number</label>
+          <input id="id_number" name="id_number" value="<%= guest ? guest.id_number : '' %>"
+                 placeholder="CNIC, passport, or any other ID">
+          <small>Any format — CNIC with dashes, a passport number, a national ID. Recorded exactly as typed.</small>
         </div>
         <div class="field">
           <label for="phone">Phone</label>
@@ -87,7 +93,7 @@
         </div>
         <div class="field">
           <label for="nationality">Nationality</label>
-          <input id="nationality" name="nationality" value="<%= guest ? guest.nationality : '' %>">
+          <%- include('../partials/country-select', { name: 'nationality', value: guest ? guest.nationality : '' }) %>
         </div>
         <div class="field span-2">
           <label for="address">Address</label>
@@ -157,16 +163,23 @@
         .then(function (rooms) {
           var previous = roomSelect.value;
           roomSelect.innerHTML = '<option value="">— choose a room —</option>';
+          var freeCount = 0;
           rooms.forEach(function (r) {
             var opt = document.createElement('option');
             opt.value = r.id;
             opt.dataset.rate = (r.base_rate / 100).toFixed(2);
-            opt.textContent = r.number + ' · ' + r.type_name + ' · ' + symbol + ' ' + (r.base_rate / 100).toFixed(2);
-            if (String(r.id) === previous) opt.selected = true;
+            opt.textContent = r.number + ' · ' + r.type_name + ' · ' + symbol + ' ' + (r.base_rate / 100).toFixed(2) +
+              (r.available ? '' : ' — ' + r.blocked_reason);
+            // A taken room stays visible but cannot be picked, so the reason is
+            // on screen instead of the room simply vanishing from the list.
+            opt.disabled = !r.available;
+            if (r.available) freeCount++;
+            if (r.available && String(r.id) === previous) opt.selected = true;
             roomSelect.appendChild(opt);
           });
           document.getElementById('room-hint').textContent =
-            rooms.length + ' room(s) free for these dates.';
+            freeCount + ' of ' + rooms.length + ' rooms free for these dates. ' +
+            'Greyed-out rooms are taken — the reason is shown beside each one.';
           renderSummary();
         })
         .catch(function () { /* keep whatever is already in the list */ });

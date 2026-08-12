@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { scalar } from '../db/index.js';
 import { requirePermission } from '../lib/session.js';
+import { can } from '../lib/permissions.js';
 import { addDays, isValidDate, monthRange, today } from '../lib/dates.js';
 import { str } from '../lib/validate.js';
 import { recentActivity } from '../lib/activity.js';
@@ -13,6 +14,7 @@ import {
 import { listCategories, listExpenses } from '../services/expenses.service.js';
 import { listInvoices } from '../services/billing.service.js';
 import { listRooms } from '../services/rooms.service.js';
+import { lowStock, stockSummary } from '../services/inventory.service.js';
 
 const router = Router();
 
@@ -99,6 +101,8 @@ router.get('/admin', requirePermission('reports.pnl'), (req, res) => {
       rooms_without_rate: rooms.filter((r) => !r.base_rate).length,
       staff: scalar(`SELECT COUNT(*) FROM users WHERE is_active = 1`),
     },
+    stock: can(req.user?.role, 'inventory.view') ? stockSummary(period.from, period.to) : null,
+    lowStock: can(req.user?.role, 'inventory.view') ? lowStock().slice(0, 10) : [],
     activity: recentActivity(12),
   });
 });

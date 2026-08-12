@@ -4,14 +4,15 @@ import { today, isValidDate } from '../lib/dates.js';
 import { str } from '../lib/validate.js';
 import { arrivalsOn, dashboard, departuresOn, inHouseGuests, profitAndLoss } from '../services/reports.service.js';
 import { roomStatusBoard, statusCounts } from '../services/rooms.service.js';
-import { kitchenQueue } from '../services/orders.service.js';
+import { kitchenQueue, unbilledFoodByRoom } from '../services/orders.service.js';
 import { can } from '../lib/permissions.js';
 
 const router = Router();
 
 router.get('/', requirePermission('dashboard.view'), (req, res) => {
   const date = isValidDate(str(req.query.date)) ? str(req.query.date) : today();
-  const board = roomStatusBoard(date);
+  const tabs = unbilledFoodByRoom();
+  const board = roomStatusBoard(date).map((room) => ({ ...room, food_tab: tabs.get(room.id) ?? null }));
 
   res.render('pages/dashboard', {
     title: 'Dashboard',

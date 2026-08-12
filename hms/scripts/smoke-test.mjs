@@ -372,6 +372,7 @@ try {
     .map((m) => ({ id: Number(m[1]), name: m[2].trim() }));
   const salaries = categoryIds.find((c) => c.name === 'Salaries');
   const utilities = categoryIds.find((c) => c.name === 'Utility Bills');
+  const kitchenCategoryId = (categoryIds.find((c) => c.name === 'Kitchen Expense') ?? salaries).id;
   check('categories are selectable on the entry form', Boolean(salaries && utilities));
 
   const addExpense = async (categoryId, description, amount, when) =>
@@ -457,6 +458,132 @@ try {
   check('bulk add skips rooms that already exist',
     /1 room\(s\) added.*Skipped 2/.test(flash(bulkAgain.text)), flash(bulkAgain.text));
 
+  /* --- booking guard, countries, room tabs --------------------------------- */
+  console.log('\nGuards and guest details');
+
+  /* The first booking was checked out, so put a live guest in a room — these
+     checks are about what the screens show while someone is in the hotel. */
+  const liveRooms = [...(await GET(`/rooms/availability?from=${dayOffset(0)}&to=${dayOffset(2)}`)).text
+    .matchAll(/\/bookings\/new\?room_id=(\d+)/g)].map((m) => Number(m[1]));
+  const liveBooking = await POST('/bookings', {
+    full_name: 'Hina Tariq', id_number: 'P-9981-XZ', phone: '0304-2223344',
+    nationality: 'United Kingdom', address: 'London',
+    room_id: String(liveRooms[0]), arrival_date: dayOffset(0), departure_date: dayOffset(2),
+    rate_minor: '7000', package: 'room_only', adults: '1', check_in_now: '1',
+  }, '/bookings/new');
+  const liveId = idFrom(liveBooking.location, '/bookings');
+  check('a second guest is checked in for the room-tab checks', liveId > 0, liveBooking.location ?? '');
+
+  const liveChoice = new RegExp(`value="(${liveId}:\\d+)"`).exec(
+    (await GET('/orders/new?order_type=room_service')).text)?.[1] ?? '';
+  await POST('/orders', {
+    order_type: 'room_service', meal_type: 'dinner', billing_mode: 'add_to_room',
+    room_choice: liveChoice,
+    'lines[0][menu_item_id]': String(menuIds[0]), 'lines[0][qty]': '2',
+    discount: '0', notes: '',
+  }, '/orders/new?order_type=room_service');
+
+  check('a non-Pakistani ID format is stored exactly as typed',
+    (await GET(`/bookings/${liveId}`)).text.includes('P-9981-XZ'));
+  check('the chosen nationality is saved',
+    (await GET(`/bookings/${liveId}`)).text.includes('United Kingdom'));
+
+  const formPage = await GET(`/bookings/new?arrival_date=${dayOffset(0)}&departure_date=${dayOffset(1)}`);
+  check('the booking form lists taken rooms as blocked rather than hiding them',
+    /disabled[\s\S]{0,120}taken by .+ \(BK-\d+\) until /.test(formPage.text),
+    'expected a disabled option naming who holds the room and until when');
+  check('nationality is a country dropdown', formPage.text.includes('<optgroup label="All countries"'));
+  check('the country list is complete', (formPage.text.match(/<option value="[A-Z]/g) || []).length > 150);
+  check('the ID field accepts any format', /ID number[\s\S]{0,400}CNIC, passport, or any other ID/.test(formPage.text));
+
+  const roomsJson = JSON.parse((await GET(
+    `/bookings/rooms.json?from=${dayOffset(0)}&to=${dayOffset(1)}`)).text);
+  check('rooms.json reports availability for every room', roomsJson.length > 0 &&
+    roomsJson.every((r) => typeof r.available === 'boolean'));
+
+  const boardPage = await GET('/rooms');
+  check('the room board shows the running food tab on occupied rooms',
+    boardPage.text.includes('room__tab'), 'a checked-in room with food should show its tab');
+
+  const bookingWithFood = await GET(`/bookings/${bookingId}`);
+  check('booking shows meals grouped by the room they went to',
+    bookingWithFood.text.includes('Food orders'));
+
+  /* --- inventory ----------------------------------------------------------- */
+  console.log('\nInventory');
+  const supplierPage = await follow(await POST('/inventory/suppliers', {
+    name: 'Akbari Mandi', contact: 'Kamran', phone: '0300-1234567', address: 'Lahore',
+    notes: '', is_active: '1',
+  }, '/inventory/suppliers'));
+  check('a supplier can be added', /Supplier saved/i.test(flash(supplierPage.text)), flash(supplierPage.text));
+  const supplierId = /name="supplier_id"[\s\S]*?<option value="(\d+)"/.exec(
+    (await GET('/inventory/items')).text)?.[1];
+
+  const itemPage = await follow(await POST('/inventory/items', {
+    name: 'Basmati rice', category: 'kitchen', unit: 'kg', cost: '450',
+    reorder_level: '10', opening_qty: '25', supplier_id: supplierId ?? '',
+    location: 'Dry store', notes: '', is_active: '1',
+  }, '/inventory/items'));
+  check('a stock item can be added with opening stock', /saved/i.test(flash(itemPage.text)), flash(itemPage.text));
+
+  const stockList = await GET('/inventory');
+  check('opening stock shows on the stock list', stockList.text.includes('Basmati rice') && stockList.text.includes('25'));
+  check('stock value is calculated', stockList.text.includes('11,250.00'), '25 kg at 450 = 11,250');
+
+  const itemId = /\/inventory\/items\/(\d+)/.exec(stockList.text)?.[1];
+
+  /* Buying stock should also land in the expense ledger. */
+  const purchase = await follow(await POST('/inventory/movements', {
+    item_id: itemId, entry_date: dayOffset(0), kind: 'purchase', qty: '20',
+    unit_cost: '460', supplier_id: supplierId ?? '', reference: 'BILL-9',
+    note: '', post_to_expenses: '1', expense_category_id: String(kitchenCategoryId),
+    payment_mode: 'cash',
+  }, '/inventory/movements'));
+  check('a purchase can be recorded', /Purchase in recorded/i.test(flash(purchase.text)), flash(purchase.text));
+
+  const ledgerAfter = await GET(`/expenses?from=${dayOffset(0)}&to=${dayOffset(0)}`);
+  check('the purchase also posted to the expense ledger',
+    ledgerAfter.text.includes('Basmati rice') && ledgerAfter.text.includes('9,200.00'),
+    '20 kg at 460 = 9,200 should appear as a kitchen expense');
+
+  const issued = await follow(await POST('/inventory/movements', {
+    item_id: itemId, entry_date: dayOffset(0), kind: 'issue', qty: '5',
+    unit_cost: '', supplier_id: '', reference: '', note: 'For dinner service',
+    payment_mode: 'cash',
+  }, '/inventory/movements'));
+  check('stock can be issued out', /Issued out recorded/i.test(flash(issued.text)), flash(issued.text));
+
+  const afterIssue = await GET(`/inventory/items/${itemId}`);
+  check('the running balance is 40 kg after 25 in, 20 in, 5 out',
+    afterIssue.text.includes('>40<') || afterIssue.text.includes('40 '), 'expected 40 kg on hand');
+
+  /* Taking out more than exists must be refused, not allowed to go negative. */
+  const overIssue = await follow(await POST('/inventory/movements', {
+    item_id: itemId, entry_date: dayOffset(0), kind: 'issue', qty: '999',
+    unit_cost: '', supplier_id: '', reference: '', note: '', payment_mode: 'cash',
+  }, '/inventory/movements'));
+  check('stock cannot be taken below zero',
+    /cannot be taken out|in stock/i.test(overIssue.text), flash(overIssue.text));
+
+  /* Low stock should surface on the owner's console. */
+  await POST('/inventory/movements', {
+    item_id: itemId, entry_date: dayOffset(0), kind: 'issue', qty: '32',
+    unit_cost: '', supplier_id: '', reference: '', note: 'Bulk use',
+    payment_mode: 'cash',
+  }, '/inventory/movements');
+  const lowList = await GET('/inventory?low=1');
+  check('an item below its reorder level is flagged low', lowList.text.includes('Basmati rice'));
+  const adminWithStock = await GET('/admin?preset=month');
+  check('low stock appears on the admin dashboard',
+    adminWithStock.text.includes('Needs reordering') && adminWithStock.text.includes('Basmati rice'));
+
+  const stockCsv = await GET('/inventory/export.csv?report=stock');
+  check('stock exports to CSV', stockCsv.status === 200 && stockCsv.text.includes('Item,Category,Unit'));
+
+  const itemDelete = await follow(await POST(`/inventory/items/${itemId}/delete`, {}, '/inventory/items'));
+  check('an item with movement history cannot be deleted',
+    /stock movement|switch it off/i.test(itemDelete.text), flash(itemDelete.text));
+
   /* --- permissions -------------------------------------------------------- */
   const waiter = await follow(await POST('/admin/users', {
     full_name: 'Waiter Wasim', username: 'wasim', role: 'waiter', password: 'waiterpass1',
@@ -467,21 +594,31 @@ try {
   const asWaiter = await request('POST', '/login', { username: 'wasim', password: 'waiterpass1' });
   check('new staff are forced to set their own password', asWaiter.location === '/account/password');
 
-  const blocked = await GET('/reports');
-  check('a waiter cannot open the reports', blocked.status === 403 || blocked.status === 302,
-    `got ${blocked.status}`);
-  const blockedExpenses = await GET('/expenses');
-  check('a waiter cannot open the expense ledger',
-    blockedExpenses.status === 403 || blockedExpenses.status === 302, `got ${blockedExpenses.status}`);
-  const blockedMonthly = await GET('/reports/monthly');
-  check('a waiter cannot see the monthly profit report',
-    blockedMonthly.status === 403 || blockedMonthly.status === 302, `got ${blockedMonthly.status}`);
-  const blockedAdmin = await GET('/admin');
-  check('a waiter cannot open the admin dashboard',
-    blockedAdmin.status === 403 || blockedAdmin.status === 302, `got ${blockedAdmin.status}`);
-  const blockedCash = await GET('/reports/cashbook');
-  check('a waiter cannot open the cash book',
-    blockedCash.status === 403 || blockedCash.status === 302, `got ${blockedCash.status}`);
+  /* Set it, so what follows tests real permission boundaries rather than the
+     password-change redirect that catches every request until this is done. */
+  const changed = await POST('/account/password', {
+    current_password: 'waiterpass1', new_password: 'wasimown2026', confirm_password: 'wasimown2026',
+  }, '/account/password');
+  check('a waiter can set their own password', changed.location === '/orders', changed.location ?? '');
+
+  /* 403 specifically — a redirect would mean something else stopped the request. */
+  for (const [path, label] of [
+    ['/reports', 'the reports'],
+    ['/expenses', 'the expense ledger'],
+    ['/reports/monthly', 'the monthly profit report'],
+    ['/admin', 'the admin dashboard'],
+    ['/reports/cashbook', 'the cash book'],
+    ['/inventory/items', 'stock item management'],
+    ['/inventory/suppliers', 'the supplier list'],
+  ]) {
+    const res = await GET(path);
+    check(`a waiter cannot open ${label}`, res.status === 403, `${path} gave ${res.status}`);
+  }
+
+  const waiterOrders = await GET('/orders');
+  check('a waiter can still take orders', waiterOrders.status === 200, `got ${waiterOrders.status}`);
+  const waiterStock = await GET('/inventory');
+  check('a waiter can see what is in stock', waiterStock.status === 200, `got ${waiterStock.status}`);
 } catch (err) {
   failures.push(`fatal: ${err instanceof Error ? err.message : String(err)}`);
   console.error(err);

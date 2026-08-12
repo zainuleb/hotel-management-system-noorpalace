@@ -403,3 +403,72 @@ export function markKotPrinted(id: number): void {
 export function kitchenQueue(): OrderView[] {
   return all<OrderView>(`${ORDER_SELECT} WHERE o.status = 'open' ORDER BY o.id`);
 }
+
+/* ------------------------------------------------------------- room tabs */
+
+export interface RoomFoodTab {
+  room_id: number;
+  orders: number;
+  unbilled_minor: number;
+  complimentary_minor: number;
+}
+
+/**
+ * The running food tab on each room — meals charged to the room and not yet
+ * settled on an invoice.
+ *
+ * Orders keep the room they were delivered to, so a guest who moves rooms
+ * mid-stay leaves the earlier meals on the earlier room. Both still land on
+ * the one bill at check-out; this is about knowing what is sitting on each
+ * door right now.
+ */
+export function unbilledFoodByRoom(): Map<number, RoomFoodTab> {
+  const rows = all<RoomFoodTab>(
+    `SELECT room_id,
+            COUNT(*) AS orders,
+            COALESCE(SUM(CASE WHEN billing_mode = 'add_to_room'   THEN total_minor    ELSE 0 END), 0) AS unbilled_minor,
+            COALESCE(SUM(CASE WHEN billing_mode = 'complimentary' THEN subtotal_minor ELSE 0 END), 0) AS complimentary_minor
+       FROM orders
+      WHERE room_id IS NOT NULL
+        AND status IN ('open','served')
+        AND billing_mode IN ('add_to_room','complimentary')
+      GROUP BY room_id`,
+  );
+  return new Map(rows.map((r) => [r.room_id, r]));
+}
+
+export interface RoomOrderGroup {
+  room_id: number | null;
+  room_number: string;
+  orders: OrderView[];
+  charged_minor: number;
+  complimentary_minor: number;
+}
+
+/**
+ * A booking's food orders grouped by the room they went to. For a guest who
+ * never moved this is one group; for a guest who changed rooms it separates
+ * the meals cleanly, which is what makes the bill explainable at the desk.
+ */
+export function ordersGroupedByRoom(bookingId: number): RoomOrderGroup[] {
+  const groups = new Map<string, RoomOrderGroup>();
+
+  for (const order of ordersForBooking(bookingId)) {
+    const key = order.room_number ?? 'other';
+    const group = groups.get(key) ?? {
+      room_id: order.room_id,
+      room_number: order.room_number ?? 'Restaurant / no room',
+      orders: [],
+      charged_minor: 0,
+      complimentary_minor: 0,
+    };
+    group.orders.push(order);
+    if (order.status !== 'cancelled') {
+      if (order.billing_mode === 'complimentary') group.complimentary_minor += order.subtotal_minor;
+      else group.charged_minor += order.total_minor;
+    }
+    groups.set(key, group);
+  }
+
+  return [...groups.values()];
+}

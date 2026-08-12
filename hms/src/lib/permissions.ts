@@ -31,6 +31,8 @@ export type Permission =
   | 'reports.pnl'
   | 'expenses.view'
   | 'expenses.manage'
+  | 'inventory.view'
+  | 'inventory.manage'
   | 'activity.view'
   | 'users.manage'
   | 'settings.manage'
@@ -56,6 +58,8 @@ const RECEPTION: Permission[] = [
   'billing.create',
   'billing.payment',
   'reports.view',
+  'inventory.view',
+  'inventory.manage',
 ];
 
 const WAITER: Permission[] = [
@@ -66,6 +70,7 @@ const WAITER: Permission[] = [
   'orders.create',
   'orders.edit',
   'orders.cancel',
+  'inventory.view',
 ];
 
 const ACCOUNTANT: Permission[] = [
@@ -83,6 +88,8 @@ const ACCOUNTANT: Permission[] = [
   'reports.pnl',
   'expenses.view',
   'expenses.manage',
+  'inventory.view',
+  'inventory.manage',
   'activity.view',
 ];
 
@@ -112,6 +119,8 @@ const ALL: Permission[] = [
   'reports.pnl',
   'expenses.view',
   'expenses.manage',
+  'inventory.view',
+  'inventory.manage',
   'activity.view',
   'users.manage',
   'settings.manage',

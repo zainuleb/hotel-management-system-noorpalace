@@ -32,6 +32,10 @@
             <div class="room__type"><%= room.type_name %><%= room.floor ? ' · Floor ' + room.floor : '' %></div>
             <% if (room.occupancy) { %>
               <div class="room__guest"><%= room.occupancy.guest_name %></div>
+              <% if (room.food_tab && (room.food_tab.unbilled_minor || room.food_tab.complimentary_minor)) { %>
+                <div class="room__tab">🍽 <%= fmt(room.food_tab.unbilled_minor) %><%
+                  %><% if (room.food_tab.complimentary_minor) { %> <span class="muted">+comp</span><% } %></div>
+              <% } %>
               <div class="room__until"><%= room.occupancy.code %> · until <%= fmtDate(room.occupancy.departure_date) %></div>
             <% } else if (room.status === 'maintenance') { %>
               <div class="room__guest">Under maintenance</div>

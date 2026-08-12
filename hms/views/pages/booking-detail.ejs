@@ -43,7 +43,8 @@
       <dl class="kv">
         <dt>Guest</dt><dd><a href="/guests/<%= guest.id %>"><%= guest.full_name %></a></dd>
         <dt>Phone</dt><dd><%= guest.phone || '—' %></dd>
-        <dt>CNIC / Passport</dt><dd><%= guest.id_number || '—' %></dd>
+        <dt>Nationality</dt><dd><%= guest.nationality || '—' %></dd>
+        <dt>ID number</dt><dd><%= guest.id_number || '—' %></dd>
         <dt>Arrival</dt><dd><%= fmtDate(booking.arrival_date) %><%= booking.checked_in_at ? ' (in at ' + fmtDateTime(booking.checked_in_at) + ')' : '' %></dd>
         <dt>Departure</dt><dd><%= fmtDate(booking.departure_date) %><%= booking.checked_out_at ? ' (out at ' + fmtDateTime(booking.checked_out_at) + ')' : '' %></dd>
         <dt>Nights</dt><dd><%= nights %></dd>
@@ -159,26 +160,57 @@
       <a class="btn btn--sm" href="/orders/new?order_type=room_service&booking_id=<%= booking.id %>&room_id=<%= current ? current.room_id : 0 %>">＋ New order</a>
     <% } %>
   </div>
-  <div class="card__body card__body--flush table-wrap">
+  <div class="card__body card__body--flush">
     <% if (!orders.length) { %>
       <div class="table-empty">No food has been ordered on this booking.</div>
     <% } else { %>
-      <table class="data">
-        <thead><tr><th>Order</th><th>When</th><th>Meal</th><th>Billing</th><th>Status</th><th class="num">Amount</th></tr></thead>
-        <tbody>
-          <% orders.forEach(function (o) { %>
-            <tr>
-              <td><a href="/orders/<%= o.id %>"><%= o.code %></a></td>
-              <td class="nowrap"><small><%= fmtDateTime(o.created_at) %></small></td>
-              <td><%= domain.MEAL_LABELS[o.meal_type] %></td>
-              <td><span class="badge badge--<%= o.billing_mode === 'add_to_room' ? 'info' : (o.billing_mode === 'complimentary' ? 'brand' : 'ok') %>"><%= domain.BILLING_MODE_LABELS[o.billing_mode] %></span></td>
-              <td><span class="badge"><%= domain.ORDER_STATUS_LABELS[o.status] %></span></td>
-              <td class="num"><%= fmt(o.total_minor) %></td>
-            </tr>
-          <% }) %>
-        </tbody>
-      </table>
+      <%
+        /* Grouped by the room each meal went to. With one room this reads as a
+           single list; if the guest moved, it separates the meals cleanly,
+           which is what makes the bill explainable at the desk. */
+        var multiRoom = orderGroups.length > 1;
+      %>
+      <% orderGroups.forEach(function (group) { %>
+        <% if (multiRoom) { %>
+          <div class="card__head" style="border-top:1px solid var(--line)">
+            <h3>Room <%= group.room_number %></h3>
+            <div class="spacer"></div>
+            <span class="badge badge--info">charged <%= fmt(group.charged_minor) %></span>
+            <% if (group.complimentary_minor) { %>
+              <span class="badge badge--brand">complimentary <%= fmt(group.complimentary_minor) %></span>
+            <% } %>
+          </div>
+        <% } %>
+        <div class="table-wrap">
+          <table class="data">
+            <thead><tr><th>Order</th><th>When</th><th>Meal</th><th>Billing</th><th>Status</th><th class="num">Amount</th></tr></thead>
+            <tbody>
+              <% group.orders.forEach(function (o) { %>
+                <tr>
+                  <td><a href="/orders/<%= o.id %>"><%= o.code %></a></td>
+                  <td class="nowrap"><small><%= fmtDateTime(o.created_at) %></small></td>
+                  <td><%= domain.MEAL_LABELS[o.meal_type] %></td>
+                  <td><span class="badge badge--<%= o.billing_mode === 'add_to_room' ? 'info' : (o.billing_mode === 'complimentary' ? 'brand' : 'ok') %>"><%= domain.BILLING_MODE_LABELS[o.billing_mode] %></span></td>
+                  <td><span class="badge"><%= domain.ORDER_STATUS_LABELS[o.status] %></span></td>
+                  <td class="num"><%= fmt(o.total_minor) %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% }) %>
     <% } %>
+  </div>
+  <div class="card__foot">
+    <small class="muted">
+      Meals can be added at any point while the guest is checked in — including
+      one entered the morning after it was served. Everything charged to the room
+      is collected onto the single bill at check-out, whenever it was entered.
+      <% if (orderGroups.length > 1) { %>
+        Because this guest changed rooms, meals stay against the room they were
+        delivered to.
+      <% } %>
+    </small>
   </div>
 </div>
 

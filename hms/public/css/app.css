@@ -389,3 +389,10 @@ textarea { min-height: 72px; resize: vertical; }
   .content { padding: 0; }
   .card { border: 0; box-shadow: none; }
 }
+
+/* Running food tab shown on an occupied room card. */
+.room__tab {
+  font-size: .74rem; font-weight: 650; color: var(--info);
+  background: var(--info-bg); border-radius: 4px;
+  padding: .05rem .3rem; display: inline-block; margin-top: .2rem;
+}

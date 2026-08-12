@@ -1,0 +1,134 @@
+<%- include('../partials/head', { heading: 'Stock Items' }) %>
+
+<div class="grid grid--2 grid--wide">
+  <div class="card">
+    <div class="card__head">
+      <h2><%= rows.length %> item(s)</h2>
+      <div class="spacer"></div>
+      <a class="btn btn--sm" href="/inventory">Stock list</a>
+      <a class="btn btn--sm" href="/inventory/suppliers">Suppliers</a>
+    </div>
+    <div class="card__body card__body--flush table-wrap">
+      <% if (!rows.length) { %>
+        <div class="table-empty">No items yet. Add the first one on the right.</div>
+      <% } else { %>
+        <table class="data">
+          <thead><tr><th>Item</th><th>Category</th><th class="num">On hand</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            <% rows.forEach(function (r) { %>
+              <tr>
+                <td><a href="/inventory/items/<%= r.id %>"><strong><%= r.name %></strong></a>
+                  <% if (r.supplier_name) { %><br><small class="muted"><%= r.supplier_name %></small><% } %></td>
+                <td><small><%= categoryLabels[r.category] %></small></td>
+                <td class="num"><%= qty(r.on_hand) %> <small class="muted"><%= r.unit %></small></td>
+                <td>
+                  <% if (!r.is_active) { %><span class="badge">Switched off</span>
+                  <% } else if (r.on_hand <= 0) { %><span class="badge badge--bad">Out of stock</span>
+                  <% } else if (r.is_low) { %><span class="badge badge--warn">Low</span>
+                  <% } else { %><span class="badge badge--ok">In stock</span><% } %>
+                </td>
+                <td class="right nowrap">
+                  <a class="btn btn--sm" href="/inventory/items?edit=<%= r.id %>">Edit</a>
+                  <form method="post" action="/inventory/items/<%= r.id %>/delete" style="display:inline"
+                        data-confirm="Delete &quot;<%= r.name %>&quot;?">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button class="btn btn--sm btn--danger" type="submit">Delete</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__head"><h2><%= editing ? 'Edit "' + editing.name + '"' : 'Add a stock item' %></h2></div>
+    <form method="post" action="/inventory/items">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="id" value="<%= editing ? editing.id : '' %>">
+      <div class="card__body">
+        <div class="field">
+          <label for="name">Item name</label>
+          <input id="name" name="name" value="<%= editing ? editing.name : '' %>" placeholder="e.g. Basmati rice" required>
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="category">Category</label>
+            <select id="category" name="category">
+              <% categories.forEach(function (c) { %>
+                <option value="<%= c %>" <%= editing && editing.category === c ? 'selected' : '' %>><%= categoryLabels[c] %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="field">
+            <label for="unit">Counted in</label>
+            <select id="unit" name="unit">
+              <% units.forEach(function (u) { %>
+                <option value="<%= u %>" <%= (editing ? editing.unit : 'pcs') === u ? 'selected' : '' %>><%= u %></option>
+              <% }) %>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="cost">Cost per <span id="unit-echo"><%= editing ? editing.unit : 'unit' %></span></label>
+            <input id="cost" name="cost" type="number" step="0.01" min="0"
+                   value="<%= editing ? (editing.cost_minor / 100).toFixed(2) : '' %>">
+          </div>
+          <div class="field">
+            <label for="reorder_level">Reorder when it drops to</label>
+            <input id="reorder_level" name="reorder_level" type="number" step="0.001" min="0"
+                   value="<%= editing ? qtyValue(editing.reorder_level) : '' %>">
+            <small>Leave blank for no alert.</small>
+          </div>
+        </div>
+        <% if (!editing) { %>
+          <div class="field">
+            <label for="opening_qty">How much is on the shelf now?</label>
+            <input id="opening_qty" name="opening_qty" type="number" step="0.001" min="0" value="0">
+            <small>Recorded as opening stock, so the figure starts out true. Leave 0 if there is none.</small>
+          </div>
+        <% } %>
+        <div class="form-grid">
+          <div class="field">
+            <label for="supplier_id">Usual supplier</label>
+            <select id="supplier_id" name="supplier_id">
+              <option value="">— none —</option>
+              <% suppliers.forEach(function (s) { %>
+                <option value="<%= s.id %>" <%= editing && editing.supplier_id === s.id ? 'selected' : '' %>><%= s.name %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="field">
+            <label for="location">Kept where?</label>
+            <input id="location" name="location" value="<%= editing ? editing.location : '' %>" placeholder="Dry store, cold room…">
+          </div>
+        </div>
+        <div class="field">
+          <label for="notes">Notes</label>
+          <input id="notes" name="notes" value="<%= editing ? editing.notes : '' %>">
+        </div>
+        <label class="check">
+          <input type="checkbox" name="is_active" value="1" <%= !editing || editing.is_active ? 'checked' : '' %>>
+          <span>In use — show it on the stock list</span>
+        </label>
+      </div>
+      <div class="card__foot btn-row">
+        <button class="btn btn--primary" type="submit"><%= editing ? 'Save changes' : 'Add item' %></button>
+        <% if (editing) { %><a class="btn" href="/inventory/items">Cancel</a><% } %>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var unit = document.getElementById('unit');
+    var echo = document.getElementById('unit-echo');
+    if (unit && echo) unit.addEventListener('change', function () { echo.textContent = unit.value; });
+  })();
+</script>
+
+<%- include('../partials/foot') %>

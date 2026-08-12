@@ -318,6 +318,43 @@
   </div>
 </div>
 
+<% if (stock && (stock.items || lowStock.length)) { %>
+  <div class="card">
+    <div class="card__head">
+      <h2>Stock</h2>
+      <div class="spacer"></div>
+      <span class="badge">value <%= hotel.currency_symbol %> <%= fmt(stock.value_minor) %></span>
+      <a class="btn btn--sm no-print" href="/inventory">Open inventory</a>
+    </div>
+    <div class="card__body card__body--flush table-wrap">
+      <% if (!lowStock.length) { %>
+        <div class="table-empty">
+          Nothing needs reordering. <%= stock.items %> item(s) tracked, worth
+          <%= hotel.currency_symbol %> <%= fmt(stock.value_minor) %>.
+          Purchased <%= fmt(stock.purchases_minor) %> this period<%= stock.wastage_minor ? ', wasted ' + fmt(stock.wastage_minor) : '' %>.
+        </div>
+      <% } else { %>
+        <table class="data">
+          <thead><tr><th>Needs reordering</th><th class="num">On hand</th><th class="num">Reorder at</th><th>Supplier</th></tr></thead>
+          <tbody>
+            <% lowStock.forEach(function (r) { %>
+              <tr>
+                <td><a href="/inventory/items/<%= r.id %>"><%= r.name %></a></td>
+                <td class="num">
+                  <% if (r.on_hand <= 0) { %><span class="badge badge--bad">out</span>
+                  <% } else { %><strong><%= qty(r.on_hand) %></strong> <small class="muted"><%= r.unit %></small><% } %>
+                </td>
+                <td class="num muted"><%= qty(r.reorder_level) %> <%= r.unit %></td>
+                <td class="muted"><%= r.supplier_name || '—' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+  </div>
+<% } %>
+
 <div class="grid grid--2 grid--wide">
   <div class="card no-print">
     <div class="card__head"><h2>Everything else</h2></div>
@@ -334,6 +371,7 @@
         <% if (can('settings.manage')) { %><a class="btn" href="/admin/settings">Settings</a><% } %>
         <% if (can('rooms.manage')) { %><a class="btn" href="/rooms/manage">Rooms</a><% } %>
         <% if (can('menu.manage')) { %><a class="btn" href="/menu">Menu</a><% } %>
+        <% if (can('inventory.view')) { %><a class="btn" href="/inventory">Inventory</a><% } %>
         <% if (can('backup.manage')) { %><a class="btn" href="/admin/backup">Backup</a><% } %>
       </div>
     </div>

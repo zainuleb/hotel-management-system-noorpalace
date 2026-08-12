@@ -5,7 +5,7 @@ import { addDays, isValidDate, nightsBetween, today } from '../lib/dates.js';
 import { toMinor } from '../lib/money.js';
 import { bool, int, oneOf, optionalId, positiveInt, requiredStr, str, ValidationError } from '../lib/validate.js';
 import { recentActivity } from '../lib/activity.js';
-import { availableRooms, getRoom, listRoomTypes, listRooms } from '../services/rooms.service.js';
+import { availableRooms, getRoom, listRoomTypes, listRooms, roomAvailability } from '../services/rooms.service.js';
 import {
   bookingSegments,
   cancelBooking,
@@ -19,7 +19,7 @@ import {
   updateBooking,
 } from '../services/bookings.service.js';
 import { activeInvoiceForBooking, buildBillDraft, checkoutAndInvoice, invoicesForBooking } from '../services/billing.service.js';
-import { ordersForBooking } from '../services/orders.service.js';
+import { ordersForBooking, ordersGroupedByRoom } from '../services/orders.service.js';
 import type { Guest, PackageType, PaymentMode } from '../types/domain.js';
 
 const router = Router();
@@ -50,12 +50,14 @@ router.get('/bookings/rooms.json', requirePermission('bookings.view'), (req, res
     return;
   }
   res.json(
-    availableRooms(from, to, exclude).map((room) => ({
+    roomAvailability(from, to, exclude).map((room) => ({
       id: room.id,
       number: room.number,
       type_name: room.type_name,
       base_rate: room.base_rate,
       floor: room.floor,
+      available: room.available,
+      blocked_reason: room.blocked_reason,
     })),
   );
 });
@@ -82,7 +84,7 @@ router.get('/bookings/new', requirePermission('bookings.create'), (req, res) => 
       adults: 1,
       children: 0,
     },
-    rooms: availableRooms(arrival, departure),
+    rooms: roomAvailability(arrival, departure),
     allRooms: listRooms(),
     roomTypes: listRoomTypes(),
   });
@@ -159,6 +161,7 @@ router.get('/bookings/:id', requirePermission('bookings.view'), (req, res) => {
     previewDeparture: departure,
     activeInvoice: activeInvoiceForBooking(id),
     freeRooms: data.booking.status === 'checked_in' ? availableRooms(today(), data.booking.departure_date, id) : [],
+    orderGroups: ordersGroupedByRoom(id),
     history: recentActivity(40, 'booking', id),
   });
 });
@@ -175,9 +178,8 @@ router.get('/bookings/:id/edit', requirePermission('bookings.edit'), (req, res) 
   if (booking.status !== 'reserved') {
     throw new ValidationError('Only a reservation can be edited. Use Change Room or Extend Stay instead.');
   }
-  const free = availableRooms(booking.arrival_date, booking.departure_date, id);
-  const assigned = current ? getRoom(current.room_id) : null;
-  const rooms = assigned && !free.some((r) => r.id === assigned.id) ? [assigned, ...free] : free;
+  // The booking's own room must stay selectable even though it holds itself.
+  const rooms = roomAvailability(booking.arrival_date, booking.departure_date, id);
 
   res.render('pages/booking-form', {
     title: `Edit ${booking.code}`,

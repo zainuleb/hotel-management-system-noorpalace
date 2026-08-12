@@ -7,9 +7,11 @@ import { cookies, loadSession, purgeExpiredSessions, requireLogin, verifyCsrf } 
 import { ValidationError } from './lib/validate.js';
 import { formatDate, formatDateTime, nowTs, today } from './lib/dates.js';
 import { formatMinor, toInputValue, toMajor } from './lib/money.js';
+import { formatQty, qtyInputValue } from './lib/quantity.js';
 import { getSettings } from './services/settings.service.js';
 import { startBackupSchedule } from './services/backup.service.js';
 import * as domain from './types/domain.js';
+import { COMMON_COUNTRIES, COUNTRIES } from './lib/countries.js';
 
 import authRoutes from './routes/auth.routes.js';
 import setupRoutes from './routes/setup.routes.js';
@@ -23,6 +25,7 @@ import billingRoutes from './routes/billing.routes.js';
 import reportRoutes from './routes/reports.routes.js';
 import expenseRoutes from './routes/expenses.routes.js';
 import adminDashboardRoutes from './routes/admin-dashboard.routes.js';
+import inventoryRoutes from './routes/inventory.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 
 export function createApp(): express.Express {
@@ -47,11 +50,15 @@ export function createApp(): express.Express {
     res.locals.money = formatMinor;
     res.locals.majorValue = toInputValue;
     res.locals.toMajor = toMajor;
+    res.locals.qty = formatQty;
+    res.locals.qtyValue = qtyInputValue;
     res.locals.fmtDate = formatDate;
     res.locals.fmtDateTime = formatDateTime;
     res.locals.today = today();
     res.locals.nowStamp = nowTs();
     res.locals.domain = domain;
+    res.locals.countries = COUNTRIES;
+    res.locals.commonCountries = COMMON_COUNTRIES;
     res.locals.currentPath = req.path;
     res.locals.query = req.query;
     res.locals.title = 'Hotel Management';
@@ -93,6 +100,7 @@ export function createApp(): express.Express {
   app.use(reportRoutes);
   app.use(expenseRoutes);
   app.use(adminDashboardRoutes);
+  app.use(inventoryRoutes);
   app.use(adminRoutes);
 
   app.use((req, res) => {

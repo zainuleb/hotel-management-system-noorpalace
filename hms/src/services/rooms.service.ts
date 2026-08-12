@@ -1,4 +1,5 @@
 import { all, get } from '../db/index.js';
+import { formatDate } from '../lib/dates.js';
 import type { RoomStatus, RoomType, RoomWithType } from '../types/domain.js';
 
 /** Booking states that actually hold a room. */
@@ -175,4 +176,54 @@ export function occupiedRoomsNow(date: string): (RoomWithType & { booking_id: nu
     date,
     date,
   );
+}
+
+export interface RoomAvailability extends RoomWithType {
+  available: boolean;
+  /** Plain-English reason a room cannot be taken, for the booking form. */
+  blocked_reason: string;
+  held_by_code: string | null;
+  held_until: string | null;
+}
+
+/**
+ * Every room, each marked free or blocked with the reason.
+ *
+ * The booking form used to simply omit rooms that were taken, which left the
+ * receptionist guessing why a room they can see on the board is not in the
+ * list. Showing them greyed out with "held by BK-00005 until 10 Aug" answers
+ * the question without them having to go and look.
+ */
+export function roomAvailability(
+  from: string,
+  to: string,
+  excludeBookingId?: number | null,
+): RoomAvailability[] {
+  const rooms = listRooms();
+  const free = new Set(availableRooms(from, to, excludeBookingId).map((r) => r.id));
+
+  return rooms.map((room) => {
+    if (free.has(room.id)) {
+      return { ...room, available: true, blocked_reason: '', held_by_code: null, held_until: null };
+    }
+    if (room.is_out_of_service) {
+      return {
+        ...room,
+        available: false,
+        blocked_reason: room.maintenance_note ? `under maintenance — ${room.maintenance_note}` : 'under maintenance',
+        held_by_code: null,
+        held_until: null,
+      };
+    }
+    const clash = roomConflict(room.id, from, to, excludeBookingId);
+    return {
+      ...room,
+      available: false,
+      blocked_reason: clash
+        ? `taken by ${clash.guest_name} (${clash.code}) until ${formatDate(clash.to_date)}`
+        : 'not available for these dates',
+      held_by_code: clash?.code ?? null,
+      held_until: clash?.to_date ?? null,
+    };
+  });
 }

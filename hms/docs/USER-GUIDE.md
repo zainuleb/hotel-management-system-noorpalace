@@ -43,6 +43,16 @@ The first screen answers "what is happening right now":
    automatically.
 4. Start typing the guest's name. If they have stayed before, click their name to
    reuse the record and keep their history together.
+
+**Rooms that are already taken** appear in the list greyed out, with who has them
+and until when — so you can see at a glance why a room is not available instead
+of wondering where it went. They cannot be selected, and the system refuses the
+booking even if someone tries to force it through.
+
+**ID number** takes any format — a CNIC with dashes, a passport number, a
+national ID from anywhere. It is stored exactly as typed and never reformatted.
+**Nationality** is a dropdown of every country, with the ones you see most at the
+top.
 5. If the guest is standing at the desk right now, tick **Walk-in — check this
    guest in right now**. Leave it unticked for an advance reservation.
 
@@ -93,6 +103,18 @@ right up until the order is billed.
 
 **Kitchen Queue** shows every open order on one screen and refreshes itself.
 Press **Served** as each goes out.
+
+### Meals added later
+
+A meal can be entered at any point while the guest is checked in — including the
+morning after it was served. Everything charged to the room is collected onto the
+one bill at check-out, whenever it was typed in.
+
+Each order stays attached to the room it went to. On the room board, an occupied
+room shows its **running food tab** so you can see what is sitting on that door
+before the guest reaches the desk. If a guest changed rooms mid-stay, the booking
+page separates the meals by room — the earlier meals stay on the earlier room,
+and both still appear on the single final bill.
 
 To take payment on a Cash Now order: open it → **Take payment now** → choose
 cash / card / bank transfer / online → the receipt opens ready to print.
@@ -333,3 +355,64 @@ full month of income.
 
 All profit figures exclude tax. Tax you collect for the government was never the
 hotel's money, so counting it would flatter the result.
+
+---
+
+## Inventory
+
+Stock for the kitchen, bar, housekeeping, linen store and maintenance cupboard.
+**Inventory** in the left menu.
+
+Front desk and administrators can record stock; waiters can look but not change.
+
+### Setting it up once
+
+1. **Suppliers** — add who you buy from.
+2. **Stock Items** — add each thing you want to track: name, what it is counted
+   in (kg, litre, pcs…), the cost you pay, and the level at which it should be
+   reordered. Enter what is on the shelf right now as **opening stock** so the
+   figure starts out true.
+
+Only track what is worth counting. Rice, chicken, oil, gas cylinders, towels,
+toiletries and light bulbs are worth it. Individual spices usually are not.
+
+### Day to day
+
+From **Stock Movements**, or the **In** / **Out** buttons on the stock list:
+
+| Entry | When to use it |
+|---|---|
+| **Stock came in** | Bought from a supplier |
+| **Stock went out** | Taken by the kitchen or housekeeping |
+| **Wastage** | Spoiled, broken or expired |
+| **Opening stock** | What was already there when you started tracking |
+| **Stock-take fix** | After counting the shelf and finding a difference |
+| **Returned to supplier** | Sent back |
+
+**A purchase can post itself to the expenses ledger.** Leave *Also record this as
+an expense* ticked and pick the heading (usually Kitchen Expense) — the bill goes
+into the profit figures without anyone typing it twice. Untick it if the bill has
+already been entered by hand, or you will count it twice.
+
+### Things the system will not let you do, on purpose
+
+* **Stock cannot go below zero.** If you try to issue more than the book says is
+  there, it stops you — that always means a purchase was never entered. Record
+  the missing purchase, or use a stock-take fix.
+* **The stock figure cannot be edited directly.** It is the sum of every entry,
+  which is what makes it trustworthy. Correcting a miscount means recording a
+  stock-take fix, and that leaves a note of who changed what and why.
+* **An item with history cannot be deleted.** Switch it off instead — it drops
+  off the stock list and old figures stay exactly as they were.
+
+### Knowing what to buy
+
+The **Need reordering** figure at the top, and the yellow bar, list everything at
+or below its reorder level. Click **Show the shopping list** for just those
+items, with their usual supplier. The same list appears on the Admin Dashboard.
+
+### What stock value means
+
+The value shown is what is on the shelf at the last price you paid. **It is not
+an expense** — the money left the business when the stock was *bought*, and that
+is already in the expense ledger. Do not add the two together.

@@ -1,0 +1,156 @@
+<%- include('../partials/head', { heading: 'Inventory' }) %>
+
+<div class="grid grid--4" style="margin-bottom:1.1rem">
+  <div class="stat stat--brand">
+    <div class="stat__label">Stock on hand</div>
+    <div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(summary.value_minor) %></div>
+    <div class="stat__meta"><%= summary.items %> item(s) tracked</div>
+  </div>
+  <div class="stat" style="<%= summary.low_items ? 'border-color:var(--warn)' : '' %>">
+    <div class="stat__label">Need reordering</div>
+    <div class="stat__value" style="<%= summary.low_items ? 'color:var(--warn)' : '' %>"><%= summary.low_items %></div>
+    <div class="stat__meta"><%= summary.out_of_stock %> completely out</div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Purchased this period</div>
+    <div class="stat__value"><%= hotel.currency_symbol %> <%= fmt(summary.purchases_minor) %></div>
+    <div class="stat__meta"><%= fmtDate(from) %> → <%= fmtDate(to) %></div>
+  </div>
+  <div class="stat" style="<%= summary.wastage_minor ? 'border-color:var(--bad)' : '' %>">
+    <div class="stat__label">Wastage this period</div>
+    <div class="stat__value" style="<%= summary.wastage_minor ? 'color:var(--bad)' : '' %>">
+      <%= hotel.currency_symbol %> <%= fmt(summary.wastage_minor) %>
+    </div>
+    <div class="stat__meta">Issued out <%= fmt(summary.consumed_minor) %></div>
+  </div>
+</div>
+
+<% if (lowCount && !filters.low_only) { %>
+  <div class="notice notice--warn" style="margin-bottom:1.1rem">
+    <strong><%= lowCount %> item(s) are at or below their reorder level.</strong>
+    <a href="/inventory?low=1">Show the shopping list</a>.
+  </div>
+<% } %>
+
+<div class="card">
+  <div class="card__body">
+    <form class="filters" method="get" action="/inventory">
+      <div class="field field--grow">
+        <label for="q">Search</label>
+        <input id="q" name="q" type="search" value="<%= filters.q %>" placeholder="Item, store location or supplier">
+      </div>
+      <div class="field">
+        <label for="category">Category</label>
+        <select id="category" name="category" data-auto-submit>
+          <option value="all" <%= filters.category === 'all' ? 'selected' : '' %>>All categories</option>
+          <% categories.forEach(function (c) { %>
+            <option value="<%= c %>" <%= filters.category === c ? 'selected' : '' %>><%= categoryLabels[c] %></option>
+          <% }) %>
+        </select>
+      </div>
+      <label class="check" style="margin-bottom:0">
+        <input type="checkbox" name="low" value="1" <%= filters.low_only ? 'checked' : '' %> data-auto-submit>
+        <span>Only what needs reordering</span>
+      </label>
+      <button class="btn btn--primary" type="submit">Filter</button>
+      <div style="flex:1"></div>
+      <% if (can('inventory.manage')) { %>
+        <a class="btn" href="/inventory/movements?record=purchase">＋ Record purchase</a>
+        <a class="btn" href="/inventory/movements?record=issue">＋ Issue stock</a>
+      <% } %>
+      <a class="btn" href="/inventory/export.csv?report=stock">Export CSV</a>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card__head">
+    <h2><%= rows.length %> item(s)</h2>
+    <div class="spacer"></div>
+    <% if (can('inventory.manage')) { %>
+      <a class="btn btn--sm" href="/inventory/items">Manage items</a>
+      <a class="btn btn--sm" href="/inventory/suppliers">Suppliers</a>
+    <% } %>
+    <a class="btn btn--sm" href="/inventory/movements">Movement history</a>
+  </div>
+  <div class="card__body card__body--flush table-wrap">
+    <% if (!rows.length) { %>
+      <div class="table-empty">
+        Nothing here yet.
+        <% if (can('inventory.manage')) { %><br><a href="/inventory/items">Add your first stock item</a>.<% } %>
+      </div>
+    <% } else { %>
+      <table class="data">
+        <thead>
+          <tr><th>Item</th><th>Category</th><th class="num">On hand</th><th class="num">Reorder at</th>
+              <th class="num">Unit cost</th><th class="num">Value</th><th>Supplier</th><th>Last moved</th><th></th></tr>
+        </thead>
+        <tbody>
+          <% rows.forEach(function (r) { %>
+            <tr>
+              <td>
+                <a href="/inventory/items/<%= r.id %>"><strong><%= r.name %></strong></a>
+                <% if (r.location) { %><br><small class="muted"><%= r.location %></small><% } %>
+              </td>
+              <td><small><%= categoryLabels[r.category] %></small></td>
+              <td class="num">
+                <% if (r.on_hand <= 0) { %>
+                  <span class="badge badge--bad">out of stock</span>
+                <% } else { %>
+                  <strong><%= qty(r.on_hand) %></strong> <small class="muted"><%= r.unit %></small>
+                  <% if (r.is_low) { %><br><span class="badge badge--warn">low</span><% } %>
+                <% } %>
+              </td>
+              <td class="num muted"><%= r.reorder_level ? qty(r.reorder_level) + ' ' + r.unit : '—' %></td>
+              <td class="num"><%= fmt(r.cost_minor) %></td>
+              <td class="num"><%= fmt(r.value_minor) %></td>
+              <td class="muted"><%= r.supplier_name || '—' %></td>
+              <td><small class="muted"><%= r.last_movement ? fmtDate(r.last_movement) : 'never' %></small></td>
+              <td class="right nowrap">
+                <% if (can('inventory.manage')) { %>
+                  <a class="btn btn--sm" href="/inventory/movements?item_id=<%= r.id %>&record=purchase">In</a>
+                  <a class="btn btn--sm" href="/inventory/movements?item_id=<%= r.id %>&record=issue">Out</a>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="5">Total stock value</td>
+            <td class="num"><%= hotel.currency_symbol %> <%= fmt(rows.reduce(function (s, r) { return s + r.value_minor; }, 0)) %></td>
+            <td colspan="3"></td>
+          </tr>
+        </tfoot>
+      </table>
+    <% } %>
+  </div>
+</div>
+
+<% if (byCategory.length) { %>
+  <div class="card">
+    <div class="card__head"><h2>Value by category</h2></div>
+    <div class="card__body card__body--flush table-wrap">
+      <% var peak = Math.max.apply(null, byCategory.map(function (c) { return c.value_minor; }).concat([1])); %>
+      <table class="data">
+        <thead><tr><th>Category</th><th class="num">Items</th><th class="num">Value</th><th style="width:34%">Share</th></tr></thead>
+        <tbody>
+          <% byCategory.forEach(function (c) { %>
+            <tr>
+              <td><%= categoryLabels[c.category] %></td>
+              <td class="num"><%= c.items %></td>
+              <td class="num"><%= fmt(c.value_minor) %></td>
+              <td><div class="bar"><span style="width:<%= Math.round((c.value_minor / peak) * 100) %>%"></span></div></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div class="card__foot">
+      <small class="muted">Stock value is what is on the shelf at the last known cost price. It is not an
+        expense — the money left when the stock was <em>bought</em>, which is already in the expense ledger.</small>
+    </div>
+  </div>
+<% } %>
+
+<%- include('../partials/foot') %>

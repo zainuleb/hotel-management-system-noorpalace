@@ -246,6 +246,58 @@ CREATE TABLE IF NOT EXISTS expenses (
 CREATE INDEX IF NOT EXISTS idx_expenses_date     ON expenses(entry_date);
 CREATE INDEX IF NOT EXISTS idx_expenses_category ON expenses(category_id);
 
+-- Stock for the kitchen, the bar, housekeeping and maintenance.
+--
+-- Quantities are stored as INTEGER in *thousandths* of the item's unit, so
+-- 1.250 kg is 1250. Same reasoning as money: no floats, so a year of small
+-- issues cannot drift the stock figure.
+CREATE TABLE IF NOT EXISTS suppliers (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  name       TEXT NOT NULL UNIQUE COLLATE NOCASE,
+  contact    TEXT NOT NULL DEFAULT '',
+  phone      TEXT NOT NULL DEFAULT '',
+  address    TEXT NOT NULL DEFAULT '',
+  notes      TEXT NOT NULL DEFAULT '',
+  is_active  INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+);
+
+CREATE TABLE IF NOT EXISTS inventory_items (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  name          TEXT NOT NULL UNIQUE COLLATE NOCASE,
+  category      TEXT NOT NULL CHECK (category IN ('kitchen','beverages','housekeeping','linen','toiletries','maintenance','office','other')),
+  unit          TEXT NOT NULL DEFAULT 'pcs',
+  reorder_level INTEGER NOT NULL DEFAULT 0,
+  cost_minor    INTEGER NOT NULL DEFAULT 0,
+  supplier_id   INTEGER REFERENCES suppliers(id),
+  location      TEXT NOT NULL DEFAULT '',
+  notes         TEXT NOT NULL DEFAULT '',
+  is_active     INTEGER NOT NULL DEFAULT 1,
+  created_at    TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+);
+CREATE INDEX IF NOT EXISTS idx_inventory_category ON inventory_items(category);
+
+-- Every change in stock, never an editable running total. Current stock is the
+-- sum of these rows, so the figure can always be explained line by line.
+CREATE TABLE IF NOT EXISTS stock_movements (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  item_id      INTEGER NOT NULL REFERENCES inventory_items(id) ON DELETE CASCADE,
+  entry_date   TEXT NOT NULL,
+  kind         TEXT NOT NULL CHECK (kind IN ('purchase','opening','issue','wastage','adjustment','return')),
+  qty_change   INTEGER NOT NULL,
+  unit_cost_minor INTEGER NOT NULL DEFAULT 0,
+  value_minor  INTEGER NOT NULL DEFAULT 0,
+  supplier_id  INTEGER REFERENCES suppliers(id),
+  reference    TEXT NOT NULL DEFAULT '',
+  note         TEXT NOT NULL DEFAULT '',
+  expense_id   INTEGER REFERENCES expenses(id),
+  created_by   INTEGER REFERENCES users(id),
+  created_at   TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+);
+CREATE INDEX IF NOT EXISTS idx_stock_item ON stock_movements(item_id);
+CREATE INDEX IF NOT EXISTS idx_stock_date ON stock_movements(entry_date);
+CREATE INDEX IF NOT EXISTS idx_stock_kind ON stock_movements(kind);
+
 CREATE TABLE IF NOT EXISTS activity_log (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id    INTEGER REFERENCES users(id),

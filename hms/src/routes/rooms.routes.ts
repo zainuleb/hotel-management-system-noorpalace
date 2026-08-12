@@ -15,6 +15,7 @@ import {
   statusCounts,
 } from '../services/rooms.service.js';
 import { scalar } from '../db/index.js';
+import { unbilledFoodByRoom } from '../services/orders.service.js';
 
 const router = Router();
 
@@ -23,10 +24,11 @@ const router = Router();
 router.get('/rooms', requirePermission('rooms.view'), (req, res) => {
   const date = isValidDate(str(req.query.date)) ? str(req.query.date) : today();
   const board = roomStatusBoard(date, true);
+  const tabs = unbilledFoodByRoom();
   res.render('pages/rooms-board', {
     title: 'Room Status',
     date,
-    board,
+    board: board.map((room) => ({ ...room, food_tab: tabs.get(room.id) ?? null })),
     counts: statusCounts(board),
     prevDate: addDays(date, -1),
     nextDate: addDays(date, 1),
